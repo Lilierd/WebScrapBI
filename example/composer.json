@@ -1,0 +1,6 @@
+{
+    "require": {
+        "dmore/chrome-mink-driver": "^2.9",
+        "phpoffice/phpspreadsheet": "^2.0"
+    }
+}
