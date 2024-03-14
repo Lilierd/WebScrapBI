@@ -51,10 +51,6 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # CHROME HEADLESS
-RUN curl -sL https://dl.google.com/linux/linux_signing_key.pub | apt-key add - \
-  && echo "deb [arch=amd64] https://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list \
-  && apt-get update
-# cc
 
 
 RUN setcap "cap_net_bind_service=+ep" /usr/bin/php8.3
