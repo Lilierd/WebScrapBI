@@ -15,7 +15,12 @@ class SeleniumServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(RemoteWebDriver::class, function (Application $app) {
-            return RemoteWebDriver::create('http://selenium:4444/wd/hub', DesiredCapabilities::chrome());
+
+
+            $driverURL = config('rwd.driver_url', 'http://selenium:4444/wd/hub');
+            $desiredCapabilities = config('rwd.driver_capabilities', DesiredCapabilities::chrome());
+
+            return RemoteWebDriver::create($driverURL, $desiredCapabilities);
         });
     }
 
@@ -24,6 +29,8 @@ class SeleniumServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        $this->publishes([
+            __DIR__.'/../config/rwd.php' => config_path('rwd.php'),
+        ]);
     }
 }
