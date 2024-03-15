@@ -1,22 +1,29 @@
 <?php
 
-use Facebook\WebDriver\Chrome\ChromeDriver;
-use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Facebook\WebDriver\WebDriverBy;
-use GuzzleHttp\Client;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
-use Laravel\Dusk\Browser;
-use Symfony\Component\BrowserKit\HttpBrowser;
-use Symfony\Component\HttpKernel\HttpKernelBrowser;
+use Illuminate\Support\Str;
 
-Route::get('/', function (RemoteWebDriver $driver) {
+Route::get('/{code?}', function (RemoteWebDriver $driver, string|null $code = "1rPADOC") {
 
     // $driver = RemoteWebDriver::create('http://selenium:4444/wd/hub', DesiredCapabilities::chrome());
+    // $code = "1rPADOC";
+    $response = "NO DATA FOR {$code}";
+    $dateStr = date('Y-m-d_h-i');
+    $value = "undefined";
     try {
-        $driver->get('https://boursorama.com/bourse/');
-        $driver->findElement(WebDriverBy::cssSelector('div[title="CAC 40"]'));
+        $driver->get("https://www.boursorama.com/cours/{$code}/");
+
+        // $driver->takeScreenshot(storage_path("{$dateStr}_{$code}.png"));
+        $element = $driver->findElement(WebDriverBy::cssSelector('[data-ist-last]'));
+
+        // $element = $driver->findElement(WebDriverBy::cssSelector('body'));
+        $tagName = $element->getTagName();
+        $value;
+        parse_str($element->isDisplayed(), $value);
+
+        dump($value, $tagName);
     }
     catch (Exception $exception) {
         throw $exception;
@@ -25,5 +32,5 @@ Route::get('/', function (RemoteWebDriver $driver) {
         $driver->quit();
     }
 
-    return "Hey";
+    return $value;
 });

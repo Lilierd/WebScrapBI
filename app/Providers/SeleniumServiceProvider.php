@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Facebook\WebDriver\Chrome\ChromeOptions;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Illuminate\Contracts\Foundation\Application;
@@ -14,13 +15,21 @@ class SeleniumServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+
         $this->app->singleton(RemoteWebDriver::class, function (Application $app) {
 
+            $seleniumServerUrl = config('selenium.server_url');
+            $desiredCapabilities = config('selenium.driver_capabilities', DesiredCapabilities::chrome());
 
-            $driverURL = config('rwd.driver_url', 'http://selenium:4444/wd/hub');
-            $desiredCapabilities = config('rwd.driver_capabilities', DesiredCapabilities::chrome());
+            // $options = new ChromeOptions();
+            // $options->addArguments([
+            //     "--headless",
+            //     "--disable-gpu"
+            // ]);
+            // $desiredCapabilities->(ChromeOptions::CAPABILITY, $options);
 
-            return RemoteWebDriver::create($driverURL, $desiredCapabilities);
+
+            return RemoteWebDriver::create($seleniumServerUrl, $desiredCapabilities);
         });
     }
 
@@ -30,7 +39,7 @@ class SeleniumServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->publishes([
-            __DIR__.'/../config/rwd.php' => config_path('rwd.php'),
+            __DIR__.'/../config/selenium.php' => config_path('selenium.php'),
         ]);
     }
 }
