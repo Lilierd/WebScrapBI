@@ -21,14 +21,6 @@ class SeleniumServiceProvider extends ServiceProvider
             $seleniumServerUrl = config('selenium.server_url');
             $desiredCapabilities = config('selenium.driver_capabilities', DesiredCapabilities::chrome());
 
-            // $options = new ChromeOptions();
-            // $options->addArguments([
-            //     "--headless",
-            //     "--disable-gpu"
-            // ]);
-            // $desiredCapabilities->(ChromeOptions::CAPABILITY, $options);
-
-
             return RemoteWebDriver::create($seleniumServerUrl, $desiredCapabilities);
         });
     }

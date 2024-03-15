@@ -20,8 +20,7 @@ Route::get('/{code?}', function (RemoteWebDriver $driver, string|null $code = "1
 
         // $element = $driver->findElement(WebDriverBy::cssSelector('body'));
         $tagName = $element->getTagName();
-        $value;
-        parse_str($element->isDisplayed(), $value);
+        $value = $element->getDomProperty("innerText");
 
         dump($value, $tagName);
     }

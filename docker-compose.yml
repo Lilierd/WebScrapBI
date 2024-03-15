@@ -50,6 +50,8 @@ services:
             timeout: 5s
     selenium:
         image: selenium/standalone-chrome
+        ports:
+            - 7900:7900
         extra_hosts:
             - 'host.docker.internal:host-gateway'
         volumes:
