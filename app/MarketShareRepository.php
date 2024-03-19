@@ -9,11 +9,13 @@ use Facebook\WebDriver\WebDriverExpectedCondition;
 use Facebook\WebDriver\WebDriverWait;
 use PhpParser\Node\Expr\Array_;
 
-class MarketShareRepository {
+class MarketShareRepository
+{
 
     // public function __construct()
 
-    public static function loadMarketShare(RemoteWebDriver $driver = null, string $url = null) {
+    public static function loadMarketShare(RemoteWebDriver $driver = null, string $url = null)
+    {
         $buffer = [];
         try {
             $driver->get($url);
@@ -54,10 +56,14 @@ class MarketShareRepository {
             throw $exception;
         }
         // finally {
-            // $driver->quit();
+        // $driver->quit();
         // }
 
         return $buffer;
     }
 
+    public static function downloadExcel(RemoteWebDriver $driver = null, string $url = null)
+    {
+
+    }
 }
