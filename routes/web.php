@@ -15,22 +15,24 @@ Route::get('/{code?}/', function (string|null $code = "1rPADOC") {
         '1rPAC'
     ];
     $data = [];
-    foreach($codes as $code) {
-        $url = "https://boursorama.com/cours/{$code}";
-
-        try {
-            $seleniumServerUrl = config('selenium.server_url');
-            $desiredCapabilities = config('selenium.driver_capabilities', DesiredCapabilities::chrome());
-
-            $driver = RemoteWebDriver::create($seleniumServerUrl, $desiredCapabilities);
 
 
+    $seleniumServerUrl = config('selenium.server_url');
+    $desiredCapabilities = config('selenium.driver_capabilities', DesiredCapabilities::chrome());
+    $driver = RemoteWebDriver::create($seleniumServerUrl, $desiredCapabilities);
+
+    //Connexion du driver
+
+    //Ensuite on bz
+    try {
+        foreach ($codes as $code) {
+            $url = "https://boursorama.com/cours/{$code}";
             $data[$code] = MarketShareRepository::loadMarketShare($driver, $url);
-        } catch(Exception $e){
-            throw $e;
-        } finally {
-            $driver->quit();
         }
+    } catch (Exception $e) {
+        throw $e;
+    } finally {
+        $driver->quit();
     }
     return $data;
 });
