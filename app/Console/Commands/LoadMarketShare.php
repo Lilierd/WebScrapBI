@@ -27,9 +27,9 @@ class LoadMarketShare extends Command
     /**
      * Execute the console command.
      */
-    public function handle(MarketShareRepository $marketShareRepository, string $code)
+    public function handle(MarketShareRepository $marketShareRepository, string $code, RemoteWebDriver $driver)
     {
-        $data = $marketShareRepository->loadMarketShare("https://www.boursorama.com/cours/{$code}");
+        $data = $marketShareRepository->loadMarketShare($driver, "https://www.boursorama.com/cours/{$code}");
 
         $this->line("Found current value for {$code}:");
         $this->info($data);

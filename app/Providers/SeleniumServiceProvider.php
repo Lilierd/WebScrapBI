@@ -16,13 +16,15 @@ class SeleniumServiceProvider extends ServiceProvider
     public function register(): void
     {
 
-        $this->app->singleton(RemoteWebDriver::class, function (Application $app) {
+        // $this->app->
 
-            $seleniumServerUrl = config('selenium.server_url');
-            $desiredCapabilities = config('selenium.driver_capabilities', DesiredCapabilities::chrome());
+        // $this->app->singleton(RemoteWebDriver::class, function (Application $app) {
 
-            return RemoteWebDriver::create($seleniumServerUrl, $desiredCapabilities);
-        });
+        //     $seleniumServerUrl = config('selenium.server_url');
+        //     $desiredCapabilities = config('selenium.driver_capabilities', DesiredCapabilities::chrome());
+
+        //     return RemoteWebDriver::create($seleniumServerUrl, $desiredCapabilities);
+        // });
     }
 
     /**

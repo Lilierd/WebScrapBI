@@ -25,6 +25,6 @@ class SearchMarketShare extends Command
      */
     public function handle()
     {
-        //
+
     }
 }
