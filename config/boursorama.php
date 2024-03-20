@@ -1,6 +1,7 @@
 <?php
 
 return [
+<<<<<<< HEAD
     'base_url'              => env('BOURSORAMA_BASE_URL', 'https://boursorama.com'),
     'username'              => env('BOURSORAMA_USENAME', "Muntz"),
     'password'              => env('BOURSORAMA_PASSWORD', "Webscraping2024!"),
@@ -10,4 +11,8 @@ return [
         '1rPABCA',
         '1rPAC'
     ]
+=======
+    'username'              => env('BOURSORAMA_USENAME', "Muntz"),
+    'password'              => env('BOURSORAMA_PASSWORD', "Webscraping2024!")
+>>>>>>> refs/remotes/origin/laravel
 ];
