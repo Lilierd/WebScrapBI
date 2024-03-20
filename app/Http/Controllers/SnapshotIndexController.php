@@ -3,7 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\SnapshotIndex;
+use App\View\Components\ListComponent;
+use App\View\Components\PageComponent;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Response;
 
 class SnapshotIndexController extends Controller
 {
@@ -12,7 +16,22 @@ class SnapshotIndexController extends Controller
      */
     public function index()
     {
-        //
+        $list = SnapshotIndex::all()
+            ->map(function (SnapshotIndex $snapshotIndex) {
+                return [
+                    'href'          => route('browse.market-snapshot.by-snapshot', ['snapshotIndex' => $snapshotIndex]),
+                    'display_name'  => "{$snapshotIndex->snapshot_time->format('Y-m-d H:i')} [x{$snapshotIndex->marketShare->count()} données collectées]",
+                ];
+            });
+
+        return Response::make(
+            Blade::renderComponent(new PageComponent(
+                title: "Liste des index",
+                childComponent: Blade::renderComponent(new ListComponent(
+                    $list->toArray()
+                ))
+            ))
+        );
     }
 
     /**
