@@ -28,4 +28,4 @@ Artisan::command('inspire', function () {
 
 })->purpose('Display an inspiring quote');
 
-Schedule::command(ScrapeMarketShares::class, [])->cron("*/1 * * * *");
+Schedule::command(ScrapeMarketShares::class, [])->cron("*/30 * * * *");
