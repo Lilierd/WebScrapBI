@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\MarketShare;
 use Exception;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
+use Facebook\WebDriver\Remote\RemoteWebElement;
 use Facebook\WebDriver\WebDriverBy;
 use Facebook\WebDriver\WebDriverExpectedCondition;
 use Illuminate\Console\Command;
@@ -37,6 +38,8 @@ class SearchMarketShare extends Command
 
             $selectorPages = WebDriverBy::cssSelector('a');
 
+            $selectorIsin = WebDriverBy::cssSelector('h2.c-faceplate__isin');
+
             $URL = "";
             $nextURL = "https://www.boursorama.com/bourse/actions/cotations/";
             $visitedPageLinks = [];
@@ -47,7 +50,6 @@ class SearchMarketShare extends Command
 
                 array_push($visitedPageLinks, $URL);
                 $driver->get($URL);
-
 
                 $driver->wait(5)->until(WebDriverExpectedCondition::presenceOfElementLocated($selectorPagination));
                 $navigation = $driver->findElement($selectorPagination);
@@ -74,50 +76,27 @@ class SearchMarketShare extends Command
                 $nextURL = $bufferPageLinks[0] ?? null;
                 $this->info("Next page would be: {$nextURL}");
 
-                // dump($bufferPageLinks);
-                // break;
-                // exit;
-
                 $table = $driver->findElement($selectorTable);
-                $links = $table->findElements($selectorLinks);
+                $linksElements = $table->findElements($selectorLinks);
 
-                // dd($links);
-
-                $buffer = [];
-                foreach ($links as $link) {
-                    $this->info("Scraping links found on: {$URL}");
-                    $dataHref = $link->getDomProperty("href");
-                    $this->info("Found {$dataHref}...");
-                    // $dataIsin = $newDriver;
-
-                    // $regex_isin = '/\/([0-9a-zA-Z]+)\/$/';
-                    // $matches = [];
-                    // preg_match($regex_isin, $dataHref, $matches, PREG_OFFSET_CAPTURE, 0);
-                    // $dataIsin = $matches[1][0];
-
-                    $dataName = $link->getDomProperty("innerText");
+                $sharesData = array_map(function (RemoteWebElement $element) {
+                    $dataName = $element->getDomProperty("innerText");
+                    return [
+                        'name' => $dataName,
+                        'url' => $element->getDomProperty("href")
+                    ];
+                }, $linksElements);
 
 
-                    // $driver->get($dataHref);
-                    $selectorIsin = WebDriverBy::cssSelector('h2.c-faceplate__isin');
-                    // $dataIsin = $driver->findElement($selectorIsin)->getDomProperty("innerText");
-
-
-
-                    $buffer[] = new MarketShare([
-                        'name'  => $dataName,
-                        // 'isin'  => $dataIsin,
-                        'url'   => $dataHref
-                    ]);
-                }
-
-                foreach ($buffer as $marketShare) {
-                    $driver->get($marketShare->url);
-                    $selectorIsin = WebDriverBy::cssSelector('h2.c-faceplate__isin');
+                foreach ($sharesData as $data) {
+                    $driver->navigate()->to($data['url']);
                     $dataIsin = $driver->findElement($selectorIsin)->getDomProperty("innerText");
 
-                    $marketShare->isin = $dataIsin;
-                    $marketShare->save();
+                    MarketShare::create([
+                        'name'  => $data['name'],
+                        'isin'  => $dataIsin,
+                        'url'   => $data['url']
+                    ]);
                 }
             } while ($nextURL !== null);
         } catch (Exception $e) {
