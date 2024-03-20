@@ -10,6 +10,16 @@ use Illuminate\Support\ServiceProvider;
 
 class SeleniumServiceProvider extends ServiceProvider
 {
+
+    /**
+     * All of the container bindings that should be registered.
+     *
+     * @var array
+     */
+    public $bindings = [
+        // RemoteWebDriver::class => \Facebook\WebDriver\Remote\RemoteWebDriver::class,
+    ];
+
     /**
      * Register services.
      */
@@ -18,13 +28,13 @@ class SeleniumServiceProvider extends ServiceProvider
 
         // $this->app->
 
-        // $this->app->singleton(RemoteWebDriver::class, function (Application $app) {
+        $this->app->singleton(RemoteWebDriver::class, function (Application $app) {
 
-        //     $seleniumServerUrl = config('selenium.server_url');
-        //     $desiredCapabilities = config('selenium.driver_capabilities', DesiredCapabilities::chrome());
+            $seleniumServerUrl = config('selenium.server_url');
+            $desiredCapabilities = config('selenium.driver_capabilities', DesiredCapabilities::chrome());
 
-        //     return RemoteWebDriver::create($seleniumServerUrl, $desiredCapabilities);
-        // });
+            return RemoteWebDriver::create($seleniumServerUrl, $desiredCapabilities);
+        });
     }
 
     /**

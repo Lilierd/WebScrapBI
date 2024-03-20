@@ -15,6 +15,7 @@ Artisan::command('inspire', function () {
     //CommandeAgregerDonnees()
         //> Connecte la session
         //> Recuperer toutes les actions depuis la navigation du site
+            //> MarketShare : url, nom, ist
             //>
         //> Differentiel avec les actions enregistrées en base: enregistrement en base des nouvelles
             //> MarketShareRepository::loadMarketShare()

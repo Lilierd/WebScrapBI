@@ -22,8 +22,9 @@ Route::get('/{code?}/', function (string|null $code = "1rPADOC") {
     $driver = RemoteWebDriver::create($seleniumServerUrl, $desiredCapabilities);
 
     //Connexion du driver
+    $driver->get('https://boursorama.com/');
+    // $driver->
 
-    //Ensuite on bz
     try {
         foreach ($codes as $code) {
             $url = "https://boursorama.com/cours/{$code}";
@@ -33,6 +34,7 @@ Route::get('/{code?}/', function (string|null $code = "1rPADOC") {
         throw $e;
     } finally {
         $driver->quit();
+        dd($data);
     }
     return $data;
 });
