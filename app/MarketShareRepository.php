@@ -53,17 +53,10 @@ class MarketShareRepository
                 'volume' => intval($dataVolume),
                 //'dataTime'=> $driver->findElement($dataTime)->getDomProperty("innerText")
             ];
+            
+            return $marketShareData;
         } catch (Exception $exception) {
             throw $exception;
         }
-        // finally {
-        // $driver->quit();
-        // }
-
-        return $marketShareData;
-    }
-
-    public static function downloadExcel(RemoteWebDriver $driver = null, string $url = null)
-    {
     }
 }
