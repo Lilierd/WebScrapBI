@@ -21,18 +21,36 @@ return new class extends Migration
             $table->id();
 
             //VOLUME Column
-            $table->integer(
+            $table->bigInteger(
                 'volume',
                 false,
                 false
             )
                 ->nullable(false);
 
+            $table->decimal(
+                'last_value',
+                static::$DECIMAL_PRECISION,
+                static::$DECIMALS_AFTER
+            );
+
             //OPENING Price : Market
+            $table->decimal(
+                'open_value',
+                static::$DECIMAL_PRECISION,
+                static::$DECIMALS_AFTER
+            );
+
+            //CLOSING : Market
+            $table->decimal(
+                'close_value',
+                static::$DECIMAL_PRECISION,
+                static::$DECIMALS_AFTER
+            );
 
             //HIGH_PRICE Column
             $table->decimal(
-                'high_price',
+                'high_value',
                 static::$DECIMAL_PRECISION,
                 static::$DECIMALS_AFTER
             )
@@ -40,7 +58,7 @@ return new class extends Migration
 
             //LOW_PRICE Column
             $table->decimal(
-                'low_price',
+                'low_value',
                 static::$DECIMAL_PRECISION,
                 static::$DECIMALS_AFTER
             )

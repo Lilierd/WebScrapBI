@@ -49,27 +49,46 @@ class SearchMarketShare extends Command
             $table = $driver->findElement($selectorTable);
             $links = $table->findElements($selectorLinks);
 
+
+
             // dd($links);
+
+            $buffer = [];
             foreach($links as $link) {
-                dump($link->getDomProperty("href"));
-
-
                 $dataHref = $link->getDomProperty("href");
+                // $dataIsin = $newDriver;
 
-                $regex_isin = '/\/([0-9a-zA-Z]+)\/$/';
-                $matches = [];
-                preg_match($regex_isin, $dataHref, $matches, PREG_OFFSET_CAPTURE, 0);
-                $dataIsin = $matches[1][0];
+                // $regex_isin = '/\/([0-9a-zA-Z]+)\/$/';
+                // $matches = [];
+                // preg_match($regex_isin, $dataHref, $matches, PREG_OFFSET_CAPTURE, 0);
+                // $dataIsin = $matches[1][0];
 
                 $dataName = $link->getDomProperty("innerText");
 
 
-                MarketShare::create([
+                // $driver->get($dataHref);
+                $selectorIsin = WebDriverBy::cssSelector('h2.c-faceplate__isin');
+                // $dataIsin = $driver->findElement($selectorIsin)->getDomProperty("innerText");
+
+
+
+                $buffer[] = new MarketShare([
                     'name'  => $dataName,
-                    'isin'  => $dataIsin,
+                    // 'isin'  => $dataIsin,
                     'url'   => $dataHref
                 ]);
             }
+
+            foreach ($buffer as $marketShare) {
+                $driver->get($marketShare->url);
+                $selectorIsin = WebDriverBy::cssSelector('h2.c-faceplate__isin');
+                $dataIsin = $driver->findElement($selectorIsin)->getDomProperty("innerText");
+
+                $marketShare->isin = $dataIsin;
+                $marketShare->save();
+            }
+
+
         }
         catch (Exception $e) {
             throw $e;

@@ -8,4 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 class SnapshotIndex extends Model
 {
     use HasFactory;
+
+    protected $fillable = [
+        'snapshot_time',
+    ];
 }

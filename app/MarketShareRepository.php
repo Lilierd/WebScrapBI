@@ -16,7 +16,6 @@ class MarketShareRepository
 
     public static function loadMarketShare(RemoteWebDriver $driver = null, string $url = null)
     {
-        $buffer = [];
         try {
             $driver->get($url);
             // sleep(1);
@@ -30,7 +29,7 @@ class MarketShareRepository
             $selectorCloseValue = WebDriverBy::cssSelector('span[data-ist-previousclose]');
             $selectorVolume = WebDriverBy::cssSelector('span[data-ist-totalvolume]');
 
-
+            $driver->wait(5)->until(WebDriverExpectedCondition::presenceOfElementLocated($selectorVolume));
             $dataName = $driver->findElement($selectorName)->getDomProperty("innerText");
             $dataIsin = $driver->findElement($selectorIsin)->getDomProperty("innerText");
             $dataLastValue = $driver->findElement($selectorLastValue)->getDomProperty("innerText");
@@ -46,12 +45,12 @@ class MarketShareRepository
             $marketShareData = [ // Nomenclature relative aux tables Models de Eloquent (snake_case)
                 'name' => $dataName,
                 'isin' => $dataIsin,
-                'last_value' => $dataLastValue,
-                'high_value' => $dataHighValue,
-                'low_value' => $dataLowValue,
-                'open_value' => $dataOpenValue,
-                'volume' => $dataVolume,
-                'close_value' => $dataCloseValue
+                'last_value' => floatval($dataLastValue),
+                'high_value' => floatval($dataHighValue),
+                'low_value' => floatval($dataLowValue),
+                'open_value' => floatval($dataOpenValue),
+                'close_value' => floatval($dataCloseValue),
+                'volume' => intval($dataVolume),
                 //'dataTime'=> $driver->findElement($dataTime)->getDomProperty("innerText")
             ];
         } catch (Exception $exception) {
