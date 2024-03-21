@@ -33,7 +33,14 @@ class SeleniumServiceProvider extends ServiceProvider
             $seleniumServerUrl = config('selenium.server_url');
             $desiredCapabilities = config('selenium.driver_capabilities', DesiredCapabilities::chrome());
 
-            return RemoteWebDriver::create($seleniumServerUrl, $desiredCapabilities);
+            $chromeOptions = new ChromeOptions();
+            $chromeOptions->addArguments(['--start-fullscreen']);
+            $desiredCapabilities->setCapability(ChromeOptions::CAPABILITY, $chromeOptions);
+            // $chromeOptions->setExperimentalOption('excludeSwitches', ['disable-popup-blocking']);
+            return RemoteWebDriver::create(
+                selenium_server_url: $seleniumServerUrl,
+                desired_capabilities: $desiredCapabilities,
+            );
         });
     }
 
@@ -43,7 +50,7 @@ class SeleniumServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->publishes([
-            __DIR__.'/../config/selenium.php' => config_path('selenium.php'),
+            __DIR__ . '/../config/selenium.php' => config_path('selenium.php'),
         ]);
     }
 }
