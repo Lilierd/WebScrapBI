@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Illuminate\Console\Command;
+use Facebook\WebDriver\WebDriverExpectedCondition;
 use Facebook\WebDriver\WebDriverBy;
 use Exception;
 use App\Models\MarketShare;
@@ -43,11 +44,30 @@ class ScrapeMarketSharesFiles extends Command
 
 
         try {
-            $driver->get("https://www.boursorama.com/espace-membres/telecharger-cours/paris");
+            $driver->$_POST = [
+                "login_member[login]" => "Muntz",
+                "login_member[password]" => "Webscraping2024!",
+                "login_member[connect]" => ""
+            ];
+            $driver->get("https://www.boursorama.com/connexion/?org=/espace-membres/telecharger-cours/paris");
+            // $driver->get("https://www.boursorama.com/espace-membres/telecharger-cours/paris");
 
+
+            // * Connexion
+            $login = config('boursorama.username');
+            $password = config('boursorama.password');
+
+            /*
+            ! https://www.boursorama.com/connexion/?org=/espace-membres/telecharger-cours/paris
+            ! -> permet de se connecter avec un lien de redirection vers la page de dl de ce qu'on veut
+            ! -> Y ajouter une payload du type :
+                {
+                    "login_member[login]: "Muntz",
+                    "login_member[password]: "Webscraping2024!",
+                    "login_member[connect]: ""
+                }
+            */
             //TODO: Faire la connexion
-            config('boursorama.username');
-            config('boursorama.password');
 
             /* foreach ($marketShares as $marketShare) {
                 try {
@@ -62,14 +82,16 @@ class ScrapeMarketSharesFiles extends Command
 
             $code = $marketShares->isin;
 
-            $selectorInputCode = WebDriverBy::cssSelector('input#quote_search_customIndexesList');
+            /* $selectorInputCode = WebDriverBy::cssSelector('input#quote_search_customIndexesList');
             $inputCode = $driver->findElement($selectorInputCode)->click();
-            $driver->getKeyboard()->sendKeys($code);
+            $driver->getKeyboard()->sendKeys($code); */
 
 
 
         } catch (Exception $e) {
             throw $e;
+        } finally {
+            $driver->quit();
         }
     }
 }
