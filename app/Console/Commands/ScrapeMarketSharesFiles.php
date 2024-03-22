@@ -36,14 +36,27 @@ class ScrapeMarketSharesFiles extends Command
         try {
 
             $this->loginDriver($driver);
-            return;
 
             $driver->get("https://www.boursorama.com/espace-membres/telecharger-cours/paris");
 
-            // * Connexion
-            $login = config('boursorama.username');
-            $password = config('boursorama.password');
+            $codeTextAreaSelector = WebDriverBy::id("quote_search_customIndexesList");
+            $particulieresValuesSelector = WebDriverBy::className("c-input-radio-label");
+            $submitButtonSelector = WebDriverBy::cssSelector("input[value='Télécharger']");
 
+            $driver->findElements($particulieresValuesSelector)[1]
+                ->click();
+
+            $driver->action()
+                ->sendKeys($driver->findElement($codeTextAreaSelector), substr($marketShares->isin, 0, 12))
+                ->perform();
+
+            //TODO: Sélectioner le bon type de fichier : "Waldata, Actionbourse"
+
+            //! permet de cliquer pour dl le fichier
+            $driver->findElement($submitButtonSelector)
+                ->click();
+
+            sleep(2);
 
             /* foreach ($marketShares as $marketShare) {
                 try {
@@ -139,8 +152,6 @@ class ScrapeMarketSharesFiles extends Command
             $dataUsernameElement = $driver->findElement($dataUsernameSelector);
             $dataUsernameString = trim($dataUsernameElement->getDomProperty("innerText"));
             $this->info("\nVous êtes connectés en tant que : {$dataUsernameString}.");
-
-            $driver->quit();
         }
     }
 }
