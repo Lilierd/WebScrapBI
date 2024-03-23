@@ -1,19 +1,23 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Boursorama;
 
-use App\MarketShareRepository;
+use App\Contracts\BoursoramaScraper;
 use App\Models\MarketShare;
 use App\Models\MarketShareSnapshot;
 use App\Models\SnapshotIndex;
 use Exception;
-use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Illuminate\Console\Command;
 use Illuminate\Support\Stringable;
 use Illuminate\Support\Str;
 
 class ScrapeMarketShares extends Command
 {
+    // public function __construct(protected BoursoramaScraper $scraper)
+    // {
+    //     parent::__construct();
+    // }
+
     /**
      * The name and signature of the console command.
      *
@@ -31,9 +35,11 @@ class ScrapeMarketShares extends Command
     /**
      * Execute the console command.
      */
-    public function handle(RemoteWebDriver $driver)
+    public function handle()
     {
         // $configMarketShares = config('boursorama.known', ['1rPAB']); // A terme vers BD
+
+        $scraper = new BoursoramaScraper();
 
         $marketShares = MarketShare::all();
         // $configMarketShares = $m;
@@ -53,7 +59,7 @@ class ScrapeMarketShares extends Command
             foreach ($marketShares as $marketShare) {
                 // $url = "https://boursorama.com/cours/{$marketShare->url}";
                 try {
-                    $data = MarketShareRepository::loadMarketShare($driver, $marketShare->url);
+                    $data = $scraper->extractMarketShareDataFromUrl($marketShare->url);
                     $this->info("Data for {$marketShare->name} on {$marketShare->url}");
                     foreach ($data as $dataName => $dataValue) {
                         $string = Str::of($dataName)->padRight(16)->pipe(function (Stringable $str) use ($dataValue) {
@@ -74,8 +80,6 @@ class ScrapeMarketShares extends Command
             };
         } catch (Exception $e) {
             throw $e;
-        } finally {
-            $driver->quit();
         }
 
         // Populating DB

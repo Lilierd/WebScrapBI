@@ -40,7 +40,6 @@ class ScrapeMarketSharesFiles extends Command
         } catch(Exception $exception) {
             throw $exception;
         } finally {
-            $scraper->driver->quit();
             return;
         }
     }

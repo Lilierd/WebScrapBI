@@ -7,6 +7,7 @@ use App\Models\MarketShareSnapshot;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Facebook\WebDriver\WebDriverBy;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 
@@ -51,3 +52,16 @@ Route::get('market-snapshot-index/{snapshotIndex}', [MarketShareSnapshotControll
 
 Route::get('market-snapshot/{marketShareSnapshot}', [MarketShareSnapshotController::class, 'show'])
  ->name("market-share-snapshot.view");
+
+
+ Route::get('/aggregate', function () {
+    $outputBuffer = new class extends \Symfony\Component\Console\Output\StreamOutput
+    {
+        public function __construct()
+        {
+            parent::__construct(fopen('php://output', 'w'));
+        }
+    };
+
+    return Artisan::call('boursorama:aggregate -n', outputBuffer: $outputBuffer);
+ });

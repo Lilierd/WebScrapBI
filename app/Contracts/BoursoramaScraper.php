@@ -8,6 +8,7 @@ use Exception;
 use Facebook\WebDriver\Chrome\ChromeOptions;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
+use Facebook\WebDriver\Remote\RemoteWebElement;
 use Facebook\WebDriver\WebDriverBy;
 use Facebook\WebDriver\WebDriverExpectedCondition;
 
@@ -16,25 +17,29 @@ use Facebook\WebDriver\WebDriverExpectedCondition;
 /**
  * Une concrétisation de l'Abstraction qu'est un robot navigant sur un navigateur chrome, en l'occurence sur le site de boursorama.
  */
-class BoursoramaScraper implements AbstractScraper
+class BoursoramaScraper extends AbstractScraper
 {
-    public $driver = null;
+    /**
+     * Constructor
+     * @param ?string $seleniumServerUrl - Commonly https://selenium:4444 inside same docker host
+     */
+    // public function __construct(?string $seleniumServerUrl = null)
+    // {
+    //     $seleniumServerUrl = $seleniumServerUrl ?? config('selenium.server_url');
 
-    public function __construct(?string $seleniumServerUrl = null)
-    {
-        $seleniumServerUrl = $seleniumServerUrl ?? config('selenium.server_url');
+    //     $desiredCapabilities = config('selenium.driver_capabilities', DesiredCapabilities::chrome());
+    //     $chromeOptions = new ChromeOptions();
+    //     $chromeOptions->addArguments(['--start-maximized']);
+    //     // $chromeOptions->addArguments(['--start-fullscreen']);
+    //     $desiredCapabilities->setCapability(ChromeOptions::CAPABILITY, $chromeOptions);
 
-        $desiredCapabilities = config('selenium.driver_capabilities', DesiredCapabilities::chrome());
-        $chromeOptions = new ChromeOptions();
-        $chromeOptions->addArguments(['--start-maximized']);
-        // $chromeOptions->addArguments(['--start-fullscreen']);
-        $desiredCapabilities->setCapability(ChromeOptions::CAPABILITY, $chromeOptions);
+    //     // $this = RemoteWebDriver::create(
+    //     //     selenium_server_url: $seleniumServerUrl,
+    //     //     desired_capabilities: $desiredCapabilities,
+    //     // );
+    // }
 
-        $this->driver = RemoteWebDriver::create(
-            selenium_server_url: $seleniumServerUrl,
-            desired_capabilities: $desiredCapabilities,
-        );
-    }
+
 
     /**
      * Constructeur
@@ -124,11 +129,15 @@ class BoursoramaScraper implements AbstractScraper
         }
     }
 
-    public function extractMarketShareSnapshotDataFromUrl(string $url)
+    /**
+     * Extrait les données d'une action précise.
+     *
+     */
+    public function extractMarketShareDataFromUrl(string $url): array|null
     {
+        $marketShareData = null;
         try {
             $this->driver->get($url);
-            // sleep(1);
 
             $selectorName = WebDriverBy::cssSelector('a.c-faceplate__company-link');
             $selectorIsin = WebDriverBy::cssSelector('h2.c-faceplate__isin');
@@ -155,19 +164,158 @@ class BoursoramaScraper implements AbstractScraper
                 ->until(WebDriverExpectedCondition::presenceOfElementLocated($selectorVolume));
 
             $marketShareData = [ // Nomenclature relative aux tables Models de Eloquent (snake_case)
-                'name' => $dataName,
-                'isin' => $dataIsin,
-                'last_value' => floatval($dataLastValue),
-                'high_value' => floatval($dataHighValue),
-                'low_value' => floatval($dataLowValue),
-                'open_value' => floatval($dataOpenValue),
-                'close_value' => floatval($dataCloseValue),
-                'volume' => intval($dataVolume),
+                'name'              => $dataName,
+                'isin'              => $dataIsin,
+                'last_value'        => floatval($dataLastValue),
+                'high_value'        => floatval($dataHighValue),
+                'low_value'         => floatval($dataLowValue),
+                'open_value'        => floatval($dataOpenValue),
+                'close_value'       => floatval($dataCloseValue),
+                'volume'            => intval($dataVolume),
+                'url'               => $url,
             ];
-
-            return $marketShareData;
         } catch (Exception $exception) {
             throw $exception;
         }
+        return $marketShareData;
+    }
+
+    /**
+     * Extrait les données du cours d'une action précise.
+     */
+    public function extractMarketShareData(MarketShare $marketShare): array|null
+    {
+        return $this->extractMarketShareDataFromUrl($marketShare->url);
+    }
+
+    /**
+     * Extrait les différentes donnéees relatives aux Actions (pages disponibles dans la navigation de Boursorama)
+     */
+    public function extractMarketShares()
+    {
+        $marketShares = [];
+
+        try {
+            $selectorTable = WebDriverBy::cssSelector("table.c-table.c-table--generic.c-table--generic.c-shadow-overflow__table-fixed-column.c-table-top-flop");
+            $selectorLinks = WebDriverBy::cssSelector("tr td a");
+            $selectorPagination = WebDriverBy::cssSelector('div[role=navigation]');
+
+            $selectorPages = WebDriverBy::cssSelector('a');
+
+            $selectorIsin = WebDriverBy::cssSelector('h2.c-faceplate__isin');
+
+            $URL = "";
+            $nextURL = "https://www.boursorama.com/bourse/actions/cotations/";
+            $visitedPageLinks = [];
+            do {
+                $URL = $nextURL;
+                // $this->info("Scraping market share urls on : {$URL}");
+
+                array_push($visitedPageLinks, $URL);
+                $this->driver->get($URL);
+
+                $this->driver->wait(5)->until(WebDriverExpectedCondition::presenceOfElementLocated($selectorPagination));
+                $navigation = $this->driver->findElement($selectorPagination);
+
+                $pages = $navigation->findElements($selectorPages);
+                // Gérer changement de pages
+                // foreach($pages)
+                $bufferPageLinks = [];
+                $lastURL = $pages[array_key_last($pages)];
+
+                foreach ($pages as $page) {
+                    // dd($page->getTagName());
+                    $pageUrl = $page->getDomProperty('href');
+                    // $this->info("Found new possible result result page for market share urls: {$pageUrl}");
+                    if (
+                        !in_array($pageUrl, $visitedPageLinks)
+                    ) {
+                        // $this->info("Adding this to future pages to scrap: {$pageUrl}");
+                        array_push($bufferPageLinks, $pageUrl);
+                    } else {
+                        // $this->warn("Not adding this to future pages to scrap: {$pageUrl}");
+                    }
+                }
+                $nextURL = $bufferPageLinks[0] ?? null;
+                // $this->info("Next page would be: {$nextURL}");
+
+                $table = $this->driver->findElement($selectorTable);
+                $linksElements = $table->findElements($selectorLinks);
+
+                $sharesData = array_map(function (RemoteWebElement $element) {
+                    $dataName = $element->getDomProperty("innerText");
+                    return [
+                        'name' => $dataName,
+                        'url' => $element->getDomProperty("href")
+                    ];
+                }, $linksElements);
+
+
+                foreach ($sharesData as $data) {
+                    $this->driver->navigate()->to($data['url']);
+                    $dataIsin = $this->driver->findElement($selectorIsin)->getDomProperty("innerText");
+                    $data = [
+                        'name'  => $data['name'],
+                        'isin'  => $dataIsin,
+                        'url'   => $data['url']
+                    ];
+                    $marketShares[] = $data;
+                }
+            } while ($nextURL !== null);
+        } catch (Exception $e) {
+            throw $e;
+        } finally {
+            return $marketShares;
+        }
+    }
+
+    /**
+     * Retourne les pages de navigation disponibles
+     */
+    public function extractNavigationPages(string $URL = "https://www.boursorama.com/bourse/actions/cotations/"): array|null
+    {
+        // * Initialization
+        $navigationURLS = [];
+        $selectorPagination = WebDriverBy::cssSelector('div[role=navigation]');
+        $selectorPages = WebDriverBy::cssSelector('a');
+
+        // *
+        $this->driver->navigate()->to($URL);
+
+
+        $this->driver->wait(5)
+            ->until(WebDriverExpectedCondition::presenceOfElementLocated($selectorPagination));
+        $navigation = $this->driver->findElement($selectorPagination);
+
+        $pages = $navigation->findElements($selectorPages);
+
+        $navigationURLS = array_map(function (RemoteWebElement $element) {
+            return $element->getDomProperty("href");
+        }, $pages);
+
+        return $navigationURLS;
+    }
+
+    /**
+     * Retourne un tableau d'URLs d'actions depuis les pages de navigation de Boursorama
+     */
+    public function extractMarketSharesUrlsFromPage(string $URL = "https://www.boursorama.com/bourse/actions/cotations/"): array|null
+    {
+        $this->driver->navigate()->to($URL);
+        // * Initialization
+        $data = [];
+        $selectorTable = WebDriverBy::cssSelector("table.c-table.c-table--generic.c-table--generic.c-shadow-overflow__table-fixed-column.c-table-top-flop");
+        $selectorLinks = WebDriverBy::cssSelector("tr td a");
+
+        // *
+        $this->driver->wait(5)
+            ->until(WebDriverExpectedCondition::presenceOfElementLocated($selectorTable));
+        $table = $this->driver->findElement($selectorTable);
+        $pages = $table->findElements($selectorLinks);
+
+        $data = array_map(function (RemoteWebElement $element) {
+            return $element->getDomProperty("href");;
+        }, $pages);
+        return $data;
     }
 }
