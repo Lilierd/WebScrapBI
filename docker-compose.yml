@@ -29,9 +29,7 @@ services:
         ports:
             - '${FORWARD_DB_PORT:-3306}:3306'
         environment:
-            # MYSQL_ROOT_PASSWORD: 'AAAAAAAAAAAAA'
             MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
-
             MYSQL_ROOT_HOST: mysql
             MYSQL_DATABASE: '${DB_DATABASE}'
             MYSQL_USER: '${DB_USERNAME}'
@@ -54,9 +52,14 @@ services:
     selenium:
         image: selenium/standalone-chrome
         ports:
-            - 7900:7900
+            - '${SELENIUM_HUB_PORT:-4444}:4444'
+            - '${SELENIUM_VNC_PORT:-7900}:7900'
         extra_hosts:
             - 'host.docker.internal:host-gateway'
+        environment:
+            - 'SE_VNC_PASSWORD=${SAIL_VNC_PASSWORD:-putasse}'
+            - 'SE_VNC_VIEW_ONLY=${SAIL_VNC_VIEW_ONLY:-true}'
+            - 'SE_START_VNC=${APP_DEBUG}'
         volumes:
             - '/dev/shm:/dev/shm'
         networks:

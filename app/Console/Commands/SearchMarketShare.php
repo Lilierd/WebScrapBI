@@ -9,8 +9,9 @@ use Facebook\WebDriver\Remote\RemoteWebElement;
 use Facebook\WebDriver\WebDriverBy;
 use Facebook\WebDriver\WebDriverExpectedCondition;
 use Illuminate\Console\Command;
+use Illuminate\Contracts\Console\Isolatable;
 
-class SearchMarketShare extends Command
+class SearchMarketShare extends Command implements Isolatable
 {
     /**
      * The name and signature of the console command.

@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Contracts\BoursoramaScraper;
 use Facebook\WebDriver\Chrome\ChromeOptions;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
@@ -25,23 +26,31 @@ class SeleniumServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // $this->app->bind(RemoteWebDriver::class, function(Application $app) {
+        //     $seleniumServerUrl = config('selenium.server_url');
+        //     $desiredCapabilities = config('selenium.driver_capabilities', DesiredCapabilities::chrome());
 
+        //     $chromeOptions = new ChromeOptions();
+        //     $chromeOptions->addArguments(['--start-fullscreen']);
+        //     $desiredCapabilities->setCapability(ChromeOptions::CAPABILITY, $chromeOptions);
+
+        //     // $chromeOptions->setExperimentalOption('excludeSwitches', ['disable-popup-blocking']);
+        //     return RemoteWebDriver::create(
+        //         selenium_server_url: $seleniumServerUrl,
+        //         desired_capabilities: $desiredCapabilities,
+        //     );
+        // });
         // $this->app->
+        // $this->app->singleton(BoursoramaScraper::class, function (Application $app) {
+            // $seleniumServerUrl = config('selenium.server_url');
+            // $desiredCapabilities = config('selenium.driver_capabilities', DesiredCapabilities::chrome());
 
-        $this->app->singleton(RemoteWebDriver::class, function (Application $app) {
-
-            $seleniumServerUrl = config('selenium.server_url');
-            $desiredCapabilities = config('selenium.driver_capabilities', DesiredCapabilities::chrome());
-
-            $chromeOptions = new ChromeOptions();
-            $chromeOptions->addArguments(['--start-fullscreen']);
-            $desiredCapabilities->setCapability(ChromeOptions::CAPABILITY, $chromeOptions);
-            // $chromeOptions->setExperimentalOption('excludeSwitches', ['disable-popup-blocking']);
-            return RemoteWebDriver::create(
-                selenium_server_url: $seleniumServerUrl,
-                desired_capabilities: $desiredCapabilities,
-            );
-        });
+            // $chromeOptions = new ChromeOptions();
+            // $chromeOptions->addArguments(['--start-fullscreen']);
+            // $desiredCapabilities->setCapability(ChromeOptions::CAPABILITY, $chromeOptions);
+            // // $chromeOptions->setExperimentalOption('excludeSwitches', ['disable-popup-blocking']);
+            // return new BoursoramaScraper();
+        // });
     }
 
     /**

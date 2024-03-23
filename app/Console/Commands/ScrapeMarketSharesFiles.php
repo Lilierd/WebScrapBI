@@ -2,6 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Contracts\BoursoramaDriver;
+use App\Contracts\BoursoramaScraper;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Illuminate\Console\Command;
 use Facebook\WebDriver\WebDriverExpectedCondition;
@@ -28,119 +30,18 @@ class ScrapeMarketSharesFiles extends Command
     /**
      * Execute the console command.
      */
-    public function handle(RemoteWebDriver $driver)
+    public function handle()
     {
-        $marketShares = MarketShare::find(1);   //TODO: remettre ::all(); une fois le foreach mis en place
+        // $marketShares = MarketShare::find(1);   //TODO: remettre ::all(); une fois le foreach mis en place
 
-
+        $scraper = new BoursoramaScraper();
         try {
-
-            $this->loginDriver($driver);
+            $scraper->login();
+        } catch(Exception $exception) {
+            throw $exception;
+        } finally {
+            $scraper->driver->quit();
             return;
-
-            $driver->get("https://www.boursorama.com/espace-membres/telecharger-cours/paris");
-
-            // * Connexion
-            $login = config('boursorama.username');
-            $password = config('boursorama.password');
-
-
-            /* foreach ($marketShares as $marketShare) {
-                try {
-
-                    $code = $marketShare->isin;
-
-                } catch (Exception $e) {
-                    $this->error("Error on {$marketShare->name}");
-                    $this->line($e);
-                }
-            } */
-
-            $code = $marketShares->isin;
-
-            /* $selectorInputCode = WebDriverBy::cssSelector('input#quote_search_customIndexesList');
-            $inputCode = $driver->findElement($selectorInputCode)->click();
-            $driver->getKeyboard()->sendKeys($code); */
-        } catch (Exception $e) {
-            throw $e;
-        } finally {
-            $driver->quit();
-        }
-    }
-
-    //TODO: On va créer une classe qui regroupe les actions d'un driver pour scraper Boursorama (dans un but de non répétition du code et de limitation des bugs)
-    public function loginDriver(RemoteWebDriver $driver)
-    {
-        $bar = $this->output->createProgressBar(3);
-        $bar->start();
-        // * Initialisation des variables
-        $username                           = config('boursorama.username');
-        $boursoramaBaseUrl                  = config('boursorama.base_url');
-        $loginFormButtonSelector            = WebDriverBy::id("login-member");
-        $password                           = config('boursorama.password');
-        $inputUsernameSelector              = WebDriverBy::id("login_member_login");
-        $loginFormSelector                  = WebDriverBy::cssSelector("form[name=login_member]");
-        $inputSubmitSelector                = WebDriverBy::id("login_member_connect");
-        $inputPasswordSelector              = WebDriverBy::id("login_member_password");
-        $inputClosePopupDeMerdeSelector     = WebDriverBy::cssSelector('span.didomi-continue-without-agreeing');
-        $popupDeMerdeSelector               = WebDriverBy::cssSelector('div.didomi-popup-view');
-        $dataUsernameSelector               = WebDriverBy::cssSelector('span.c-navigation__header-logged-member');
-
-        // * Debut du parcours vers la page de connexion
-        try {
-            $driver->get($boursoramaBaseUrl);
-
-            try {
-                $driver->wait(5, 1)
-                    ->until(WebDriverExpectedCondition::presenceOfElementLocated($popupDeMerdeSelector));
-                $driver->findElement($popupDeMerdeSelector);
-
-                //? Si on passe aux lignes suivantes, c'est que la "pop up de merde" est bien présente, sinon on ira dans le bloc catch ;)
-                $driver->findElement($popupDeMerdeSelector)
-                    ->findElement($inputClosePopupDeMerdeSelector)
-                    ->click();
-            } catch (Exception $e) {
-                $this->error('While logging in, tried to intercept cookies relative popup but was unfortunately not here.'); //! Ca va être dur le TOEIC
-            } finally {
-                //TODO: Virer si pas de traitement supplémentaire
-                $bar->advance();
-            }
-
-            $driver->wait(5, 1)->until(WebDriverExpectedCondition::presenceOfElementLocated($loginFormButtonSelector));
-            $driver->findElement($loginFormButtonSelector)
-                ->click();
-
-            try {
-                $driver->wait(5, 1)
-                    ->until(WebDriverExpectedCondition::presenceOfElementLocated(
-                        $inputUsernameSelector
-                    ));
-            } catch (Exception $e) {
-                $this->error("Form didn't showed up. Aizekyel burnt to death.");
-            } finally {
-                $bar->advance();
-            }
-
-            $driver->action()
-                ->sendKeys($driver->findElement($inputUsernameSelector), $username)
-                ->sendKeys($driver->findElement($inputPasswordSelector), $password)
-                ->perform();
-            $driver->findElement($inputSubmitSelector)->click();
-        } catch (Exception $e) {
-            $this->error("Sa mere bloqué");
-            throw $e;
-        } finally {
-            //! Ne pas changer l'URL parce que là on attend la redirection en fait hein, c'est chiant sinon
-            // $driver->get($boursoramaBaseUrl);
-            $bar->advance();
-            $bar->finish();
-            $driver->wait(5, 1)->until(WebDriverExpectedCondition::presenceOfElementLocated($dataUsernameSelector));
-
-            $dataUsernameElement = $driver->findElement($dataUsernameSelector);
-            $dataUsernameString = trim($dataUsernameElement->getDomProperty("innerText"));
-            $this->info("\nVous êtes connectés en tant que : {$dataUsernameString}.");
-
-            $driver->quit();
         }
     }
 }
