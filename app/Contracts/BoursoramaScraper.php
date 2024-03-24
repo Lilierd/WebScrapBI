@@ -73,60 +73,37 @@ class BoursoramaScraper extends AbstractScraper
         $dataUsernameSelector               = WebDriverBy::cssSelector('span.c-navigation__header-logged-member');
 
         // * Debut du parcours vers la page de connexion
-        try {
-            $this->driver->get($boursoramaBaseUrl);
+        $this->driver->get($boursoramaBaseUrl);
+        $this->driver->wait(5, 1)
+            ->until(WebDriverExpectedCondition::presenceOfElementLocated($popupDeMerdeSelector));
+        $this->driver->findElement($popupDeMerdeSelector);
 
-            try {
-                $this->driver->wait(5, 1)
-                    ->until(WebDriverExpectedCondition::presenceOfElementLocated($popupDeMerdeSelector));
-                $this->driver->findElement($popupDeMerdeSelector);
+        // * Si on passe aux lignes suivantes, c'est que la "pop up de merde" est bien présente, sinon on ira dans le bloc catch ;)
+        $this->driver->findElement($popupDeMerdeSelector)
+            ->findElement($inputClosePopupDeMerdeSelector)
+            ->click();
+        $this->driver->wait(5, 1)->until(WebDriverExpectedCondition::presenceOfElementLocated($loginFormButtonSelector));
+        $this->driver->findElement($loginFormButtonSelector)
+            ->click();
 
-                // * Si on passe aux lignes suivantes, c'est que la "pop up de merde" est bien présente, sinon on ira dans le bloc catch ;)
-                $this->driver->findElement($popupDeMerdeSelector)
-                    ->findElement($inputClosePopupDeMerdeSelector)
-                    ->click();
-            } catch (Exception $e) {
-                throw $e;
-                // $this->driver->error('While logging in, tried to intercept cookies relative popup but was unfortunately not here.'); //! Ca va être dur le TOEIC
-            } finally {
-                //TODO: Virer si pas de traitement supplémentaire
-                // $bar->advance();
-            }
 
-            $this->driver->wait(5, 1)->until(WebDriverExpectedCondition::presenceOfElementLocated($loginFormButtonSelector));
-            $this->driver->findElement($loginFormButtonSelector)
-                ->click();
+        $this->driver->wait(5, 1)
+            ->until(WebDriverExpectedCondition::presenceOfElementLocated(
+                $inputUsernameSelector
+            ));
+        $this->driver->action()
+            ->sendKeys($this->driver->findElement($inputUsernameSelector), $username)
+            ->sendKeys($this->driver->findElement($inputPasswordSelector), $password)
+            ->perform();
+        $this->driver->findElement($inputSubmitSelector)->click();
 
-            try {
-                $this->driver->wait(5, 1)
-                    ->until(WebDriverExpectedCondition::presenceOfElementLocated(
-                        $inputUsernameSelector
-                    ));
-            } catch (Exception $e) {
-                throw $e;
+        //! Ne pas changer l'URL parce que là on attend la redirection en fait hein, c'est chiant sinon
+        $this->driver->wait(5, 1)->until(WebDriverExpectedCondition::presenceOfElementLocated($dataUsernameSelector));
 
-                // $this->driver->error("Form didn't showed up. Aizekyel burnt to death.");
-            } finally {
-                // $bar->advance();
-            }
+        $dataUsernameElement = $this->driver->findElement($dataUsernameSelector);
+        $dataUsernameString = trim($dataUsernameElement->getDomProperty("innerText"));
 
-            $this->driver->action()
-                ->sendKeys($this->driver->findElement($inputUsernameSelector), $username)
-                ->sendKeys($this->driver->findElement($inputPasswordSelector), $password)
-                ->perform();
-            $this->driver->findElement($inputSubmitSelector)->click();
-        } catch (Exception $e) {
-            // $this->driver->output->error("Sa mere bloqué");
-            throw $e;
-        } finally {
-            //! Ne pas changer l'URL parce que là on attend la redirection en fait hein, c'est chiant sinon
-            $this->driver->wait(5, 1)->until(WebDriverExpectedCondition::presenceOfElementLocated($dataUsernameSelector));
-
-            $dataUsernameElement = $this->driver->findElement($dataUsernameSelector);
-            $dataUsernameString = trim($dataUsernameElement->getDomProperty("innerText"));
-
-            $this->driver->quit();
-        }
+        return $dataUsernameString;
     }
 
     /**
@@ -189,87 +166,6 @@ class BoursoramaScraper extends AbstractScraper
     }
 
     /**
-     * Extrait les différentes donnéees relatives aux Actions (pages disponibles dans la navigation de Boursorama)
-     */
-    public function extractMarketShares()
-    {
-        $marketShares = [];
-
-        try {
-            $selectorTable = WebDriverBy::cssSelector("table.c-table.c-table--generic.c-table--generic.c-shadow-overflow__table-fixed-column.c-table-top-flop");
-            $selectorLinks = WebDriverBy::cssSelector("tr td a");
-            $selectorPagination = WebDriverBy::cssSelector('div[role=navigation]');
-
-            $selectorPages = WebDriverBy::cssSelector('a');
-
-            $selectorIsin = WebDriverBy::cssSelector('h2.c-faceplate__isin');
-
-            $URL = "";
-            $nextURL = "https://www.boursorama.com/bourse/actions/cotations/";
-            $visitedPageLinks = [];
-            do {
-                $URL = $nextURL;
-                // $this->info("Scraping market share urls on : {$URL}");
-
-                array_push($visitedPageLinks, $URL);
-                $this->driver->get($URL);
-
-                $this->driver->wait(5)->until(WebDriverExpectedCondition::presenceOfElementLocated($selectorPagination));
-                $navigation = $this->driver->findElement($selectorPagination);
-
-                $pages = $navigation->findElements($selectorPages);
-                // Gérer changement de pages
-                // foreach($pages)
-                $bufferPageLinks = [];
-                $lastURL = $pages[array_key_last($pages)];
-
-                foreach ($pages as $page) {
-                    // dd($page->getTagName());
-                    $pageUrl = $page->getDomProperty('href');
-                    // $this->info("Found new possible result result page for market share urls: {$pageUrl}");
-                    if (
-                        !in_array($pageUrl, $visitedPageLinks)
-                    ) {
-                        // $this->info("Adding this to future pages to scrap: {$pageUrl}");
-                        array_push($bufferPageLinks, $pageUrl);
-                    } else {
-                        // $this->warn("Not adding this to future pages to scrap: {$pageUrl}");
-                    }
-                }
-                $nextURL = $bufferPageLinks[0] ?? null;
-                // $this->info("Next page would be: {$nextURL}");
-
-                $table = $this->driver->findElement($selectorTable);
-                $linksElements = $table->findElements($selectorLinks);
-
-                $sharesData = array_map(function (RemoteWebElement $element) {
-                    $dataName = $element->getDomProperty("innerText");
-                    return [
-                        'name' => $dataName,
-                        'url' => $element->getDomProperty("href")
-                    ];
-                }, $linksElements);
-
-
-                foreach ($sharesData as $data) {
-                    $this->driver->navigate()->to($data['url']);
-                    $dataIsin = $this->driver->findElement($selectorIsin)->getDomProperty("innerText");
-                    $data = [
-                        'name'  => $data['name'],
-                        'isin'  => $dataIsin,
-                        'url'   => $data['url']
-                    ];
-                    $marketShares[] = $data;
-                }
-            } while ($nextURL !== null);
-        } catch (Exception $e) {
-            throw $e;
-        } finally {
-            return $marketShares;
-        }
-    }
-
-    /**
      * Retourne les pages de navigation disponibles
      */
     public function extractNavigationPages(string $URL = "https://www.boursorama.com/bourse/actions/cotations/"): array|null
@@ -280,8 +176,9 @@ class BoursoramaScraper extends AbstractScraper
         $selectorPages = WebDriverBy::cssSelector('a');
 
         // *
-        $this->driver->navigate()->to($URL);
-
+        if ($this->driver->getCurrentURL() !== $URL) {
+            $this->driver->navigate()->to($URL);
+        }
 
         $this->driver->wait(5)
             ->until(WebDriverExpectedCondition::presenceOfElementLocated($selectorPagination));
@@ -301,7 +198,9 @@ class BoursoramaScraper extends AbstractScraper
      */
     public function extractMarketSharesUrlsFromPage(string $URL = "https://www.boursorama.com/bourse/actions/cotations/"): array|null
     {
-        $this->driver->navigate()->to($URL);
+        if ($this->driver->getCurrentURL() !== $URL) {
+            $this->driver->navigate()->to($URL);
+        }
         // * Initialization
         $data = [];
         $selectorTable = WebDriverBy::cssSelector("table.c-table.c-table--generic.c-table--generic.c-shadow-overflow__table-fixed-column.c-table-top-flop");
@@ -317,5 +216,30 @@ class BoursoramaScraper extends AbstractScraper
             return $element->getDomProperty("href");;
         }, $pages);
         return $data;
+    }
+
+    public function extractMarketShareFileFromPage(MarketShare $marketShare, string $URL = "https://www.boursorama.com/espace-membres/telecharger-cours/international") : array|null
+    {
+        if($this->driver->getCurrentURL() !== $URL)
+        {
+            $this->driver->navigate()->to($URL);
+        }
+
+        // $this->onMarketShareFileSearchFor($marketShare);
+
+        $codeTextAreaSelector           = WebDriverBy::id("quote_search_customIndexesList");
+        $particulieresValuesSelector    = WebDriverBy::className("c-input-radio-label");
+        $submitButtonSelector           = WebDriverBy::cssSelector("input[value='Télécharger']");
+
+        $this->driver->wait(5)
+            ->until(WebDriverExpectedCondition::presenceOfElementLocated($codeTextAreaSelector));
+
+        $this->driver->action()
+            ->sendKeys($this->driver->findElement($codeTextAreaSelector), substr($marketShare->isin, 0, 12))
+            ->perform();
+
+
+
+        return null;
     }
 }

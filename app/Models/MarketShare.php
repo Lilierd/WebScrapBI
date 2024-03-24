@@ -14,4 +14,11 @@ class MarketShare extends Model
         'isin',
         'url'
     ];
+
+    public function getCodeAttribute() : string
+    {
+        return substr($this->isin, 0, 12);
+    }
+
+
 }

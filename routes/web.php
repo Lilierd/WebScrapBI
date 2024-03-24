@@ -54,14 +54,14 @@ Route::get('market-snapshot/{marketShareSnapshot}', [MarketShareSnapshotControll
  ->name("market-share-snapshot.view");
 
 
- Route::get('/aggregate', function () {
-    $outputBuffer = new class extends \Symfony\Component\Console\Output\StreamOutput
-    {
-        public function __construct()
-        {
-            parent::__construct(fopen('php://output', 'w'));
-        }
-    };
+//  Route::get('/aggregate', function () {
+//     $outputBuffer = new class extends \Symfony\Component\Console\Output\StreamOutput
+//     {
+//         public function __construct()
+//         {
+//             parent::__construct(fopen('php://output', 'w'));
+//         }
+//     };
 
-    return Artisan::call('boursorama:aggregate -n', outputBuffer: $outputBuffer);
- });
+//     return Artisan::call('boursorama:aggregate -n', outputBuffer: $outputBuffer);
+//  });

@@ -14,6 +14,7 @@ use Facebook\WebDriver\WebDriverExpectedCondition;
 use Illuminate\Cache\Console\ClearCommand;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Console\Isolatable;
+use SebastianBergmann\Timer\Timer;
 
 class Aggregate extends Command implements Isolatable
 {
@@ -22,56 +23,143 @@ class Aggregate extends Command implements Isolatable
      *
      * @var string
      */
-    protected $signature = 'boursorama:aggregate {--fresh}';
+    protected $signature = 'boursorama:aggregate {--fresh} {--ms=*}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = "Register to database all data needed";
+    protected $description =    "Register to database all data needed
+                                {--fresh : tells if navigation should be used rather than database, if no primous scraping was done}
+                                {--ms : override choices by giving MarketShares name. (Only on snapshoting state as we couldn't prédire le market share de l'url de navigation sans le traverser)}";
+
 
     /**
      * Execute the console command.
      */
     public function handle(BoursoramaScraper $boursoramaScraper)
     {
+        $timer = new Timer();
+        $timer->start();
+        // * Creating snapshot index
         $this->info("Creating Snapshot Index...");
         $snapshotIndex = SnapshotIndex::create([
             'snapshot_time' => now()
         ]);
         $this->info("Snapshot Index [{$snapshotIndex->snapshot_time}] created. {$snapshotIndex->snapshot_time}");
 
-        if ($this->option("fresh")) {
-            $this->useNavigation(boursoramaScraper: $boursoramaScraper, snapshotIndex: $snapshotIndex);
-        } else {
-            $marketShares = MarketShare::all();
-            // dd(count($marketShares));
-            $this->withProgressBar($marketShares, function (MarketShare $marketShare) use ($snapshotIndex, $boursoramaScraper) {
-                $this->output->write(" Processing {$marketShare->name}");
-                $data = $boursoramaScraper->extractMarketShareData($marketShare);
+        // * Logging in
+        $this->info("Logging in user");
+        $username = $boursoramaScraper->login();
+        $this->comment("Username is : {$username}");
 
-                MarketShareSnapshot::create([
-                    ...$data,
-                    'snapshot_index_id' => $snapshotIndex->getKey(),
-                    'market_share_id'   => $marketShare->getKey()
-                ]);
-            });
+
+        // * Si option fresh n'est pas présente, on agrège depuis la base de donnée.
+        $arbitraryCount =  MarketShare::count();
+        if (!$this->option("fresh") && $arbitraryCount) {
+            $this->useDataBase(boursoramaScraper: $boursoramaScraper, snapshotIndex: $snapshotIndex);
+        } else {
+            if (!$arbitraryCount) {
+                $this->warn("No market shares found on Database while not using '--fresh' option.");
+                if (!$this->confirm("Do you want to use Boursorama's navigation's strategy instead ?", true)) {
+                    $this->warn("Exited without any operations. Database doesn't contain any Market Shares.");
+                    $snapshotIndex->delete();
+                    return;
+                }
+            }
+            // * Si option fresh : on aggrège en parcourant la navigation
+            $this->useNavigation(boursoramaScraper: $boursoramaScraper, snapshotIndex: $snapshotIndex);
         }
 
-        $snapshotData = MarketShareSnapshot::whereSnapshotIndexId($snapshotIndex->id)->get()->toArray();
-
+        $snapshotData = MarketShareSnapshot::whereSnapshotIndexId($snapshotIndex->id)
+            ->with('marketShare', 'snapshotIndex')
+            ->get()
+            ->map(function (MarketShareSnapshot $marketShareSnapshot) {
+                return [
+                    'market_share_name'     => $marketShareSnapshot->marketShare->name,
+                    'snapshot_index_time'   => $marketShareSnapshot->snapshotIndex->snapshot_time,
+                    ...$marketShareSnapshot->only([
+                        'last_value',
+                        'low_value',
+                        'high_value',
+                        'open_value',
+                        'close_value',
+                        'volume',
+                        'snapshot_index_id',
+                        'market_share_id',
+                        'created_at'
+                    ]),
+                ];
+            });
         $this->newLine();
         if (!empty($snapshotData)) {
-            $this->table(array_keys($snapshotData[0]), [...$snapshotData]);
+            $this->info("Database has been populated with:");
+            $this->table(array_keys($snapshotData[0]), $snapshotData);
+
+            $stats = [[
+                "PHP_DURATION_TIME"     => $timer->stop()->asString(),
+                "NEW_DATABASE_MODELS"   => $snapshotData->count()
+            ]];
+
+            $this->newLine();
+            $this->info("Stats :");
+            $this->table(array_keys($stats[0]), $stats);
         }
     }
 
+    /**
+     * Aggrège tous les modèles :
+     * - MarketShareSnapshot
+     * en utilisant les données précedemment récoltées en BD
+     */
+    protected function useDataBase(BoursoramaScraper $boursoramaScraper, SnapshotIndex $snapshotIndex)
+    {
+        $marketShares = MarketShare::all();
+        $flatCallback = function (MarketShare $marketShare, mixed $key) {
+            return [$marketShare->id => $marketShare->name];
+        };
+        $choices = $marketShares->flatMap($flatCallback)->toArray();
+
+
+        $chosen = [];
+        $overridenDefaults = $this->option("ms");
+        $overridenDefaultsMap = array_filter($choices, function (string $name) use ($overridenDefaults) { return in_array($name, $overridenDefaults); });
+
+        $defaults = join(",", array_keys(!empty($this->option("ms"))
+            ? $overridenDefaultsMap
+            : $choices
+        ));
+
+        $chosen = $this->choice(
+            question: "Which market share(s) would you like to snapshot ?",
+            choices: $choices,
+            default: $defaults,
+            multiple: true,
+            attempts: 3,
+        );
+        // }
+        $resolved = $marketShares->whereIn('name', $chosen);
+
+        // dd($resolved);
+
+        $this->withProgressBar($resolved, function (MarketShare $marketShare) use ($snapshotIndex, $boursoramaScraper) {
+            $this->output->write(" Processing {$marketShare->name}");
+            $data = $boursoramaScraper->extractMarketShareData($marketShare);
+
+            MarketShareSnapshot::create([
+                ...$data,
+                'snapshot_index_id' => $snapshotIndex->getKey(),
+                'market_share_id'   => $marketShare->getKey()
+            ]);
+        });
+    }
 
     /**
      * Aggrège tous les modèles :
      * - MarketShare
      * - MarketShareSnapshot
+     * en utilisant la navigation de Boursorama
      */
     protected function useNavigation(BoursoramaScraper $boursoramaScraper, SnapshotIndex $snapshotIndex)
     {

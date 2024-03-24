@@ -35,52 +35,24 @@ class ScrapeMarketSharesFiles extends Command
         // $marketShares = MarketShare::find(1);   //TODO: remettre ::all(); une fois le foreach mis en place
 
 
-        try {
+        $codeTextAreaSelector = WebDriverBy::id("quote_search_customIndexesList");
+        $particulieresValuesSelector = WebDriverBy::className("c-input-radio-label");
+        $submitButtonSelector = WebDriverBy::cssSelector("input[value='Télécharger']");
 
-            $this->loginDriver($driver);
+        $driver->findElements($particulieresValuesSelector)[1]
+            ->click();
 
-            $driver->get("https://www.boursorama.com/espace-membres/telecharger-cours/paris");
+        $driver->action()
+            ->sendKeys($driver->findElement($codeTextAreaSelector), substr($marketShares->isin, 0, 12))
+            ->perform();
 
-            $codeTextAreaSelector = WebDriverBy::id("quote_search_customIndexesList");
-            $particulieresValuesSelector = WebDriverBy::className("c-input-radio-label");
-            $submitButtonSelector = WebDriverBy::cssSelector("input[value='Télécharger']");
+        //TODO: Sélectioner le bon type de fichier : "Waldata, Actionbourse"
 
-            $driver->findElements($particulieresValuesSelector)[1]
-                ->click();
+        //! permet de cliquer pour dl le fichier
+        $driver->findElement($submitButtonSelector)
+            ->click();
 
-            $driver->action()
-                ->sendKeys($driver->findElement($codeTextAreaSelector), substr($marketShares->isin, 0, 12))
-                ->perform();
-
-            //TODO: Sélectioner le bon type de fichier : "Waldata, Actionbourse"
-
-            //! permet de cliquer pour dl le fichier
-            $driver->findElement($submitButtonSelector)
-                ->click();
-
-            sleep(2);
-
-            /* foreach ($marketShares as $marketShare) {
-                try {
-
-                    $code = $marketShare->isin;
-
-                } catch (Exception $e) {
-                    $this->error("Error on {$marketShare->name}");
-                    $this->line($e);
-                }
-            } */
-
-            $code = $marketShares->isin;
-
-            /* $selectorInputCode = WebDriverBy::cssSelector('input#quote_search_customIndexesList');
-            $inputCode = $driver->findElement($selectorInputCode)->click();
-            $driver->getKeyboard()->sendKeys($code); */
-        } catch (Exception $e) {
-            throw $e;
-        } finally {
-            $driver->quit();
-        }
+        sleep(2);
     }
 
     //TODO: On va créer une classe qui regroupe les actions d'un driver pour scraper Boursorama (dans un but de non répétition du code et de limitation des bugs)

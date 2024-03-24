@@ -31,15 +31,17 @@ abstract class AbstractScraper
         $seleniumServerUrl = config('selenium.server_url');
         $desiredCapabilities = config('selenium.driver_capabilities', DesiredCapabilities::chrome());
         $chromeOptions = new ChromeOptions();
-        $chromeOptions->addArguments(['--start-maximized']);
-        // $chromeOptions->addArguments(['--start-fullscreen']);
+        // $chromeOptions->addArguments(['--start-maximized']);
+        // $chromeOptions->addArguments(['--headless']);
+
+        $chromeOptions->addArguments(['--start-fullscreen']);
         $desiredCapabilities->setCapability(ChromeOptions::CAPABILITY, $chromeOptions);
 
         $this->driver = RemoteWebDriver::create(
             selenium_server_url: $seleniumServerUrl,
             desired_capabilities: $desiredCapabilities,
-            connection_timeout_in_ms: 5000,
-            request_timeout_in_ms: 5000,
+            connection_timeout_in_ms: 10 * 1000,
+            request_timeout_in_ms: 10 * 1000,
         );
     }
 
