@@ -32,7 +32,7 @@ class Aggregate extends Command implements Isolatable
      */
     protected $description =    "Register to database all data needed
                                 {--fresh : tells if navigation should be used rather than database, if no primous scraping was done}
-                                {--ms : override choices by giving MarketShares name. (Only on snapshoting state as we couldn't prédire le market share de l'url de navigation sans le traverser)}";
+                                {--ms : When using in pair with `--no-interaction`, override choices by giving MarketShares name. (Only on snapshoting state as we couldn't prédire le market share de l'url de navigation sans le traverser)}";
 
 
     /**

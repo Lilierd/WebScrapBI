@@ -218,7 +218,9 @@ class BoursoramaScraper extends AbstractScraper
         return $data;
     }
 
-    public function extractMarketShareFileFromPage(MarketShare $marketShare, string $URL = "https://www.boursorama.com/espace-membres/telecharger-cours/international") : array|null
+    //TODO: extraire le fichier et le sauvegarder en base en lien avec un snapshot Index
+    // ? Pourquoi pas le sauvegarder avec comme date de départ = 1 Janvier 1970 et date de fin = SnapshotIndex snapshot_time (comme ça on est plus fiable)
+    public function extractMarketShareFileFromPage(?MarketShare $marketShare, ?SnapshotIndex $snapshotIndex, string $URL = "https://www.boursorama.com/espace-membres/telecharger-cours/international") : array|null
     {
         if($this->driver->getCurrentURL() !== $URL)
         {
