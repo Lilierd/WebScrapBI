@@ -35,6 +35,14 @@ class Aggregate extends Command implements Isolatable
                                 {--ms : When using in pair with `--no-interaction`, override choices by giving MarketShares name. (Only on snapshoting state as we couldn't prédire le market share de l'url de navigation sans le traverser)}";
 
 
+    public function __construct
+    (
+        public $isolated = true
+    )
+    {
+        parent::__construct();
+    }
+
     /**
      * Execute the console command.
      */
