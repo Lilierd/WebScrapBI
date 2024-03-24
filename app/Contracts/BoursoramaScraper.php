@@ -11,8 +11,7 @@ use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Facebook\WebDriver\Remote\RemoteWebElement;
 use Facebook\WebDriver\WebDriverBy;
 use Facebook\WebDriver\WebDriverExpectedCondition;
-
-
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Une concrétisation de l'Abstraction qu'est un robot navigant sur un navigateur chrome, en l'occurence sur le site de boursorama.
@@ -82,9 +81,12 @@ class BoursoramaScraper extends AbstractScraper
         $this->driver->findElement($popupDeMerdeSelector)
             ->findElement($inputClosePopupDeMerdeSelector)
             ->click();
+
+        // $this->snapshot();
+
         $this->driver->wait(5, 1)->until(WebDriverExpectedCondition::presenceOfElementLocated($loginFormButtonSelector));
         $this->driver->findElement($loginFormButtonSelector)
-            ->click();
+        ->click();
 
 
         $this->driver->wait(5, 1)
@@ -114,7 +116,7 @@ class BoursoramaScraper extends AbstractScraper
     {
         $marketShareData = null;
         try {
-            $this->driver->get($url);
+            $this->driver->navigate()->to($url);
 
             $selectorName = WebDriverBy::cssSelector('a.c-faceplate__company-link');
             $selectorIsin = WebDriverBy::cssSelector('h2.c-faceplate__isin');
@@ -160,8 +162,11 @@ class BoursoramaScraper extends AbstractScraper
     /**
      * Extrait les données du cours d'une action précise.
      */
-    public function extractMarketShareData(MarketShare $marketShare): array|null
+    public function extractMarketShareData(MarketShare|int $marketShare): array|null
     {
+        if(is_int($marketShare)) {
+            $marketShare = MarketShare::find($marketShare);
+        }
         return $this->extractMarketShareDataFromUrl($marketShare->url);
     }
 
@@ -244,4 +249,6 @@ class BoursoramaScraper extends AbstractScraper
 
         return null;
     }
+
+
 }

@@ -34,8 +34,23 @@ abstract class AbstractScraper
         // $chromeOptions->addArguments(['--start-maximized']);
         // $chromeOptions->addArguments(['--headless']);
 
-        $chromeOptions->addArguments(['--start-fullscreen']);
+        // $chromeOptions->addArguments(['--start-fullscreen']);
+
+        $chromeOptions->addArguments(["--window-size=1920,1080"]);
+        $chromeOptions->addArguments(["--disable-extensions"]);
+        $chromeOptions->addArguments(["--proxy-server='direct://'"]);
+        $chromeOptions->addArguments(["--proxy-bypass-list=*"]);
+        $chromeOptions->addArguments(["--start-maximized"]);
+        $chromeOptions->addArguments(['--headless']);
+        $chromeOptions->addArguments(['--disable-gpu']);
+        $chromeOptions->addArguments(['--disable-dev-shm-usage']);
+        $chromeOptions->addArguments(['--no-sandbox']);
+        $chromeOptions->addArguments(['--ignore-certificate-errors']);
+        $chromeOptions->addArguments(['--user-agent= Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36']);
+
+
         $desiredCapabilities->setCapability(ChromeOptions::CAPABILITY, $chromeOptions);
+        // $desiredCapabilities->setCapability("pageLoadStrategy", 'none');
 
         $this->driver = RemoteWebDriver::create(
             selenium_server_url: $seleniumServerUrl,
@@ -52,5 +67,13 @@ abstract class AbstractScraper
     {
         // dump("Calling destructor for AbstractScraper", $this);
         $this->driver->quit();
+    }
+
+    protected function takeScreenshot()
+    {
+        $now = now()->format("Y-m-d_H:i:s");
+        $name = "{$now}_{$this->driver->getSessionID()}.png";
+        $this->driver->takeScreenshot(storage_path($name));
+        // dd($this->driver->getPageSource());
     }
 }
