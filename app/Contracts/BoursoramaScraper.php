@@ -86,7 +86,7 @@ class BoursoramaScraper extends AbstractScraper
 
         $this->driver->wait(5, 1)->until(WebDriverExpectedCondition::presenceOfElementLocated($loginFormButtonSelector));
         $this->driver->findElement($loginFormButtonSelector)
-        ->click();
+            ->click();
 
 
         $this->driver->wait(5, 1)
@@ -164,7 +164,7 @@ class BoursoramaScraper extends AbstractScraper
      */
     public function extractMarketShareData(MarketShare|int $marketShare): array|null
     {
-        if(is_int($marketShare)) {
+        if (is_int($marketShare)) {
             $marketShare = MarketShare::find($marketShare);
         }
         return $this->extractMarketShareDataFromUrl($marketShare->url);
@@ -225,12 +225,11 @@ class BoursoramaScraper extends AbstractScraper
 
     //TODO: extraire le fichier et le sauvegarder en base en lien avec un snapshot Index
     // ? Pourquoi pas le sauvegarder avec comme date de départ = 1 Janvier 1970 et date de fin = SnapshotIndex snapshot_time (comme ça on est plus fiable)
-    public function extractMarketShareFileFromPage(?MarketShare $marketShare, ?SnapshotIndex $snapshotIndex, string $URL = "https://www.boursorama.com/espace-membres/telecharger-cours/international") : array|null
+    //public function extractMarketShareFileFromPage(?MarketShare $marketShare, ?SnapshotIndex $snapshotIndex, string $URL = "https://www.boursorama.com/espace-membres/telecharger-cours/international") : array|null
+    public function extractMarketShareFileFromPage(?string $marketShare, string $URL = "https://www.boursorama.com/espace-membres/telecharger-cours/international"): array|null
     {
-        if($this->driver->getCurrentURL() !== $URL)
-        {
+        if ($this->driver->getCurrentURL() !== $URL)
             $this->driver->navigate()->to($URL);
-        }
 
         // $this->onMarketShareFileSearchFor($marketShare);
 
@@ -238,17 +237,31 @@ class BoursoramaScraper extends AbstractScraper
         $particulieresValuesSelector    = WebDriverBy::className("c-input-radio-label");
         $submitButtonSelector           = WebDriverBy::cssSelector("input[value='Télécharger']");
 
-        $this->driver->wait(5)
+        $this->driver->wait(5, 1)
+            ->until(WebDriverExpectedCondition::presenceOfElementLocated($particulieresValuesSelector));
+
+        $this->driver->findElements($particulieresValuesSelector)[1]
+            ->click();
+
+        sleep(2);
+
+        $this->driver->wait(5, 1)
             ->until(WebDriverExpectedCondition::presenceOfElementLocated($codeTextAreaSelector));
+        $this->driver->findElement($codeTextAreaSelector);
 
         $this->driver->action()
-            ->sendKeys($this->driver->findElement($codeTextAreaSelector), substr($marketShare->isin, 0, 12))
+            ->sendKeys($this->driver->findElement($codeTextAreaSelector), substr($marketShare, 0, 12)) //->sendKeys($this->driver->findElement($codeTextAreaSelector), substr($marketShare->isin, 0, 12))
             ->perform();
 
 
+        $this->driver->action()->moveToElement($this->driver->findElement($submitButtonSelector));
+        $this->driver->findElement($submitButtonSelector)
+            ->click();
+
+        sleep(2);
+
+        $this->seleniumGridDownloadFiles(".");
 
         return null;
     }
-
-
 }

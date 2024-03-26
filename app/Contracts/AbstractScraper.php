@@ -36,7 +36,7 @@ abstract class AbstractScraper
 
         // $chromeOptions->addArguments(['--start-fullscreen']);
 
-        $chromeOptions->addArguments(["--window-size=1920,1080"]);
+        /* $chromeOptions->addArguments(["--window-size=1920,1080"]);
         $chromeOptions->addArguments(["--disable-extensions"]);
         $chromeOptions->addArguments(["--proxy-server='direct://'"]);
         $chromeOptions->addArguments(["--proxy-bypass-list=*"]);
@@ -45,8 +45,9 @@ abstract class AbstractScraper
         $chromeOptions->addArguments(['--disable-gpu']);
         $chromeOptions->addArguments(['--disable-dev-shm-usage']);
         $chromeOptions->addArguments(['--no-sandbox']);
-        $chromeOptions->addArguments(['--ignore-certificate-errors']);
-        $chromeOptions->addArguments(['--user-agent= Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36']);
+        $chromeOptions->addArguments(['--ignore-certificate-errors']); */
+        $chromeOptions->addArguments(['--enable-managed-downloads']);
+        //$chromeOptions->addArguments(['--user-agent= Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36']);
 
 
         $desiredCapabilities->setCapability(ChromeOptions::CAPABILITY, $chromeOptions);
@@ -76,4 +77,45 @@ abstract class AbstractScraper
         $this->driver->takeScreenshot(storage_path($name));
         // dd($this->driver->getPageSource());
     }
+
+    protected function seleniumGridDownloadFiles(string $default_path): void
+    {
+        //Get files names from selenium grid
+        $files = $this->driver->executeCustomCommand('/session/:sessionId/se/files');
+
+        // For multiple files if needed
+        foreach ($files['names'] as $file) {
+
+            // Set file to download
+            $file_to_download = [
+                'name' => $file,
+            ];
+
+            // Get file content from selenium grid to local
+            $file_content = $this->driver->executeCustomCommand('/session/:sessionId/se/files', 'POST', $file_to_download);
+
+            // Save file
+            file_put_contents($default_path . "/" . $file, $file_content['contents']);
+
+            // Decode and unzip file
+            $this->seleniumSystemDecode64Unzip($default_path . "/" . $file);
+        }
+    }
+
+    protected function seleniumSystemDecode64Unzip(string $path_filename): void
+    {
+        // Decode base64
+        system("base64 -d " . $path_filename . " > " . $path_filename . ".decoded");
+
+        // Saves decoded file to original file
+        system("mv " . $path_filename . ".decoded" . " " . $path_filename);
+
+        // Unzip file
+        system("zcat " . $path_filename . " > " . $path_filename . ".decoded");
+
+        // Saves unzipped file to original file
+        system("mv " . $path_filename . ".decoded" . " " . $path_filename);
+
+    }
+
 }
