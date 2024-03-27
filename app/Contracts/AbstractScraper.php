@@ -32,7 +32,7 @@ abstract class AbstractScraper
             selenium_server_url: static::getSeleniumHubUrl(),
             desired_capabilities: static::getCapabilities(),
             connection_timeout_in_ms: 360000000, //30min
-            request_timeout_in_ms: 360000000,    //30min
+            request_timeout_in_ms: 360000000
         );
     }
 
@@ -78,6 +78,7 @@ abstract class AbstractScraper
 
         $chromeOptions->addArguments([
             "--disable-extensions",
+            "--enable-managed-downloads",
             "--proxy-server='direct://'",
             "--proxy-bypass-list=*",
             "--disable-gpu",
@@ -101,4 +102,44 @@ abstract class AbstractScraper
     {
         return config('selenium.server_url', "http://selenium:4444");
     }
+    protected function seleniumGridDownloadFiles(string $default_path): void
+    {
+        //Get files names from selenium grid
+        $files = $this->driver->executeCustomCommand('/session/:sessionId/se/files');
+
+        // For multiple files if needed
+        foreach ($files['names'] as $file) {
+
+            // Set file to download
+            $file_to_download = [
+                'name' => $file,
+            ];
+
+            // Get file content from selenium grid to local
+            $file_content = $this->driver->executeCustomCommand('/session/:sessionId/se/files', 'POST', $file_to_download);
+
+            // Save file
+            file_put_contents($default_path . "/" . $file, $file_content['contents']);
+
+            // Decode and unzip file
+            $this->seleniumSystemDecode64Unzip($default_path . "/" . $file);
+        }
+    }
+
+    protected function seleniumSystemDecode64Unzip(string $path_filename): void
+    {
+        // Decode base64
+        system("base64 -d " . $path_filename . " > " . $path_filename . ".decoded");
+
+        // Saves decoded file to original file
+        system("mv " . $path_filename . ".decoded" . " " . $path_filename);
+
+        // Unzip file
+        system("zcat " . $path_filename . " > " . $path_filename . ".decoded");
+
+        // Saves unzipped file to original file
+        system("mv " . $path_filename . ".decoded" . " " . $path_filename);
+
+    }
+
 }

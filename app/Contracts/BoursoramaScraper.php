@@ -86,7 +86,7 @@ class BoursoramaScraper extends AbstractScraper
 
         $this->driver->wait(10, 25)->until(WebDriverExpectedCondition::presenceOfElementLocated($loginFormButtonSelector));
         $this->driver->findElement($loginFormButtonSelector)
-        ->click();
+            ->click();
 
 
         $this->driver->wait(10, 25)
@@ -168,7 +168,7 @@ class BoursoramaScraper extends AbstractScraper
      */
     public function extractMarketShareData(int $marketShareId): array|null
     {
-        return $this->extractMarketShareDataFromUrl(MarketShare::select('url')->findOrFail($marketShareId)->url);
+        return $this->extractMarketShareDataFromModel(MarketShare::select('url')->findOrFail($marketShareId)->url);
     }
 
     public function extractMarketShareDataFromModel(MarketShare $marketShare) : array|null
@@ -231,7 +231,8 @@ class BoursoramaScraper extends AbstractScraper
 
     //TODO: extraire le fichier et le sauvegarder en base en lien avec un snapshot Index
     // ? Pourquoi pas le sauvegarder avec comme date de départ = 1 Janvier 1970 et date de fin = SnapshotIndex snapshot_time (comme ça on est plus fiable)
-    public function extractMarketShareFileFromPage(?MarketShare $marketShare, ?SnapshotIndex $snapshotIndex, string $URL = "https://www.boursorama.com/espace-membres/telecharger-cours/international") : array|null
+    //public function extractMarketShareFileFromPage(?MarketShare $marketShare, ?SnapshotIndex $snapshotIndex, string $URL = "https://www.boursorama.com/espace-membres/telecharger-cours/international") : array|null
+    public function extractMarketShareFileFromPage(?string $marketShare, string $URL = "https://www.boursorama.com/espace-membres/telecharger-cours/international"): array|null
     {
         // if($this->driver->getCurrentURL() !== $URL)
         // {
@@ -246,15 +247,21 @@ class BoursoramaScraper extends AbstractScraper
 
         $this->driver->wait(10, 25)
             ->until(WebDriverExpectedCondition::presenceOfElementLocated($codeTextAreaSelector));
+        $this->driver->findElement($codeTextAreaSelector);
 
         $this->driver->action()
-            ->sendKeys($this->driver->findElement($codeTextAreaSelector), substr($marketShare->isin, 0, 12))
+            ->sendKeys($this->driver->findElement($codeTextAreaSelector), substr($marketShare, 0, 12)) //->sendKeys($this->driver->findElement($codeTextAreaSelector), substr($marketShare->isin, 0, 12))
             ->perform();
 
-        // $this->driver->
+
+        $this->driver->action()->moveToElement($this->driver->findElement($submitButtonSelector));
+        $this->driver->findElement($submitButtonSelector)
+            ->click();
+
+        sleep(2);
+
+        $this->seleniumGridDownloadFiles(".");
 
         return null;
     }
-
-
 }
