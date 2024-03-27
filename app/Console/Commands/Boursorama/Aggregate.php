@@ -10,9 +10,10 @@ use DateInterval;
 use DateTimeInterface;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Console\Isolatable;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use SebastianBergmann\Timer\Timer;
 
-class Aggregate extends Command implements Isolatable
+class Aggregate extends Command
 {
 
     /**
@@ -41,6 +42,8 @@ class Aggregate extends Command implements Isolatable
 
 
     protected Timer $timer;
+
+    // protected BoursoramaScraper $scraper;
 
     public function __construct(
         public $isolated = false
@@ -127,6 +130,7 @@ class Aggregate extends Command implements Isolatable
             }
         }
         $stats = [[
+            // "PHP_GET_MEMORY_PEAK"   => memory_get_peak_usage(true),
             "PHP_DURATION_TIME"     => $this->timer->stop()->asString(),
             "NEW_DATABASE_MODELS"   => MarketShareSnapshot::whereSnapshotIndexId($snapshotIndex->getKey())->count(),
         ]];
@@ -143,48 +147,43 @@ class Aggregate extends Command implements Isolatable
      */
     protected function useDataBase(BoursoramaScraper $boursoramaScraper, SnapshotIndex $snapshotIndex)
     {
-        // $marketShares = MarketShare::all()->pluck();
-        // $flatCallback = function (MarketShare $marketShare, mixed $key) {
-        //     return [$marketShare->id => $marketShare->name];
-        // };
-        $choices = MarketShare::all()->pluck("name", "id");
-        // dd($choices);
-
-        $chosen = [];
-        $overridenDefaults = $this->option("ms");
-        $overridenDefaultsMap = $choices->intersect($overridenDefaults)->toArray();
-
-        $defaults = join(",", array_keys(
-            !empty($this->option("ms"))
-                ? $overridenDefaultsMap
-                : $choices->toArray()
-        ));
+        $choices = with(MarketShare::select('id', 'name'), function (EloquentBuilder $builder) {
+            if($this->option("ms")) {
+                $builder->whereIn('name', $this->option("ms"));
+            }
+            return $builder->get()->pluck("name", "id")->toArray();
+        });
 
         $chosen = $this->choice(
             question: "Which market share(s) would you like to snapshot ?",
-            choices: $choices->toArray(),
-            default: $defaults,
+            choices: $choices,
+            default: join(",", array_keys($choices)),
             multiple: true,
-            attempts: 3,
         );
-        // }
-        $resolved = MarketShare::select("id")->whereIn('name', $chosen)->get()->pluck("id");
+        $resolved = MarketShare::whereIn('name', $chosen)->get();
 
-        // dd($resolved);
-        // dd(memory_get_peak_usage(false));
-        // memory_get_usage()
-        // dd($resolved);
-        $this->withProgressBar($resolved, function (int $marketShareID) use ($snapshotIndex, $boursoramaScraper) {
-            // $this->output->write(" Processing {$marketShareID}");
+        if($this->output->isVeryVerbose()) {
+            $this->withProgressBar($resolved, function (MarketShare $marketShare) use ($snapshotIndex, $boursoramaScraper) {
+                // $this->output->write(" Processing {$marketShareID}");
 
-            $data = $boursoramaScraper->extractMarketShareData($marketShareID);
+                $data = $boursoramaScraper->extractMarketShareDataFromModel($marketShare);
 
-            MarketShareSnapshot::create([
-                ...$data,
-                'snapshot_index_id' => $snapshotIndex->getKey(),
-                'market_share_id'   => $marketShareID
-            ]);
-        });
+                MarketShareSnapshot::create([
+                    ...$data,
+                    'snapshot_index_id' => $snapshotIndex->getKey(),
+                    'market_share_id'   => $marketShare->getKey()
+                ]);
+            });
+        } else {
+            foreach($resolved as $marketShare) {
+                $data = $boursoramaScraper->extractMarketShareDataFromModel($marketShare);
+                MarketShareSnapshot::create([
+                    ...$data,
+                    'snapshot_index_id' => $snapshotIndex->getKey(),
+                    'market_share_id'   => $marketShare->getKey()
+                ]);
+            }
+        }
     }
 
     /**
@@ -227,11 +226,19 @@ class Aggregate extends Command implements Isolatable
 
         $marketSharesUrls = [];
         $this->info("Discovering all Market Shares URLs on each page...");
-        $this->withProgressBar($pages, function ($page) use ($boursoramaScraper, &$marketSharesUrls) {
-            $this->output->write(" Parsing : {$page}");
-            $_marketSharesUrls = $boursoramaScraper->extractMarketSharesUrlsFromPage($page);
-            $marketSharesUrls = array_merge($marketSharesUrls, $_marketSharesUrls);
-        });
+        if($this->output->isVeryVerbose()) { // * Version avec progressbar
+            $this->withProgressBar($pages, function ($page) use ($boursoramaScraper, &$marketSharesUrls) {
+                $this->output->write(" Parsing : {$page}");
+                $_marketSharesUrls = $boursoramaScraper->extractMarketSharesUrlsFromPage($page);
+                $marketSharesUrls = array_merge($marketSharesUrls, $_marketSharesUrls);
+            });
+        } else { // * Version sans progressbar
+            foreach ($marketSharesUrls as $page) {
+                $_marketSharesUrls = $boursoramaScraper->extractMarketSharesUrlsFromPage($page);
+                $marketSharesUrls = array_merge($marketSharesUrls, $_marketSharesUrls);
+            }
+        }
+
         $totalMarketShares = count($marketSharesUrls);
         if (!empty($marketSharesUrls)) {
             $_marketSharesUrls = array_map(function ($value) {
@@ -291,4 +298,12 @@ class Aggregate extends Command implements Isolatable
         $this->newLine();
         $this->comment("While traversing, saved found Market Shares data under SnapshotIndex: {$snapshotIndex->id}.");
     }
+
+    // public function processMarketSharesUrls(BoursoramaScraper $boursoramaScraper, SnapshotIndex $snapshotIndex, &$urls)
+    // {
+    // }
+
+    // public function processPaginationUrls()
+    // {
+    // }
 }

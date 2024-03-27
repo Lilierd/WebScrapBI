@@ -20,44 +20,33 @@ abstract class AbstractScraper
     /**
      *
      */
-    protected RemoteWebDriver $driver;
+    // public RemoteWebDriver $driver;
 
     /**
      *
      */
-    public function __construct()
+    public function __construct(public ?RemoteWebDriver $driver = null)
     {
-        // dump("Creating an AbstractScrapper");
-        $seleniumServerUrl = config('selenium.server_url');
-        $desiredCapabilities = config('selenium.driver_capabilities', DesiredCapabilities::chrome());
-        $chromeOptions = new ChromeOptions();
-        // $chromeOptions->addArguments(['--start-maximized']);
-        // $chromeOptions->addArguments(['--headless']);
-
-        // $chromeOptions->addArguments(['--start-fullscreen']);
-
-        $chromeOptions->addArguments(["--window-size=1920,1080"]);
-        $chromeOptions->addArguments(["--disable-extensions"]);
-        $chromeOptions->addArguments(["--proxy-server='direct://'"]);
-        $chromeOptions->addArguments(["--proxy-bypass-list=*"]);
-        $chromeOptions->addArguments(["--start-maximized"]);
-        $chromeOptions->addArguments(['--headless']);
-        $chromeOptions->addArguments(['--disable-gpu']);
-        $chromeOptions->addArguments(['--disable-dev-shm-usage']);
-        $chromeOptions->addArguments(['--no-sandbox']);
-        $chromeOptions->addArguments(['--ignore-certificate-errors']);
-        $chromeOptions->addArguments(['--user-agent= Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36']);
-
-
-        $desiredCapabilities->setCapability(ChromeOptions::CAPABILITY, $chromeOptions);
-        // $desiredCapabilities->setCapability("pageLoadStrategy", 'none');
-
-        $this->driver = RemoteWebDriver::create(
-            selenium_server_url: $seleniumServerUrl,
-            desired_capabilities: $desiredCapabilities,
-            connection_timeout_in_ms: 10 * 1000,
-            request_timeout_in_ms: 10 * 1000,
+        dump("Creating a RemoteWebDriver");
+        $this->driver = $driver ?? RemoteWebDriver::create(
+            selenium_server_url: static::getSeleniumHubUrl(),
+            desired_capabilities: static::getCapabilities(),
+            connection_timeout_in_ms: 360000000, //30min
+            request_timeout_in_ms: 360000000,    //30min
         );
+    }
+
+
+    public static function resumeSession(string $sid)
+    {
+        return new static(RemoteWebDriver::createBySessionID(
+            $sid,
+            static::getSeleniumHubUrl(),
+            360000000,
+            360000000,
+            true,
+            static::getCapabilities(),
+        ));
     }
 
     /**
@@ -65,15 +54,51 @@ abstract class AbstractScraper
      */
     public function __destruct()
     {
-        // dump("Calling destructor for AbstractScraper", $this);
-        $this->driver->quit();
+        dump("Calling destructor for AbstractScraper");
+        // $this->driver->quit();
     }
 
-    protected function takeScreenshot()
+    public function takeScreenshot()
     {
         $now = now()->format("Y-m-d_H:i:s");
         $name = "{$now}_{$this->driver->getSessionID()}.png";
         $this->driver->takeScreenshot(storage_path($name));
         // dd($this->driver->getPageSource());
+    }
+
+
+    private static function getCapabilities(bool $HEADLESS = false): DesiredCapabilities
+    {
+        $desiredCapabilities = config('selenium.driver_capabilities', DesiredCapabilities::chrome());
+        $chromeOptions = new ChromeOptions();
+
+        $chromeOptions->addArguments([
+            "--user-data-dir=/home/seluser/selenium"
+        ]);
+
+        $chromeOptions->addArguments([
+            "--disable-extensions",
+            "--proxy-server='direct://'",
+            "--proxy-bypass-list=*",
+            "--disable-gpu",
+            "--disable-dev-shm-usage",
+            "--no-sandbox",
+            "--ignore-certificate-errors",
+            "--user-agent= Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+        ]);
+
+        if ($HEADLESS) {
+            $chromeOptions->addArguments(["--headless"]);
+        } else {
+            $chromeOptions->addArguments(["--start-maximized"]);
+        }
+        $desiredCapabilities->setCapability(ChromeOptions::CAPABILITY, $chromeOptions);
+
+        return $desiredCapabilities;
+    }
+
+    private static function getSeleniumHubUrl(): string
+    {
+        return config('selenium.server_url', "http://selenium:4444");
     }
 }

@@ -73,7 +73,7 @@ class BoursoramaScraper extends AbstractScraper
 
         // * Debut du parcours vers la page de connexion
         $this->driver->get($boursoramaBaseUrl);
-        $this->driver->wait(5, 1)
+        $this->driver->wait(10, 25)
             ->until(WebDriverExpectedCondition::presenceOfElementLocated($popupDeMerdeSelector));
         $this->driver->findElement($popupDeMerdeSelector);
 
@@ -84,12 +84,12 @@ class BoursoramaScraper extends AbstractScraper
 
         // $this->snapshot();
 
-        $this->driver->wait(5, 1)->until(WebDriverExpectedCondition::presenceOfElementLocated($loginFormButtonSelector));
+        $this->driver->wait(10, 25)->until(WebDriverExpectedCondition::presenceOfElementLocated($loginFormButtonSelector));
         $this->driver->findElement($loginFormButtonSelector)
         ->click();
 
 
-        $this->driver->wait(5, 1)
+        $this->driver->wait(10, 25)
             ->until(WebDriverExpectedCondition::presenceOfElementLocated(
                 $inputUsernameSelector
             ));
@@ -100,10 +100,14 @@ class BoursoramaScraper extends AbstractScraper
         $this->driver->findElement($inputSubmitSelector)->click();
 
         //! Ne pas changer l'URL parce que là on attend la redirection en fait hein, c'est chiant sinon
-        $this->driver->wait(5, 1)->until(WebDriverExpectedCondition::presenceOfElementLocated($dataUsernameSelector));
+        $this->driver->wait(10, 25)->until(WebDriverExpectedCondition::presenceOfElementLocated($dataUsernameSelector));
 
         $dataUsernameElement = $this->driver->findElement($dataUsernameSelector);
         $dataUsernameString = trim($dataUsernameElement->getDomProperty("innerText"));
+
+        $cookie = $this->driver->manage()->getCookieNamed("BRS_PROFIL");
+
+        Storage::write("/cookie.txt", $cookie->getValue());
 
         return $dataUsernameString;
     }
@@ -127,7 +131,7 @@ class BoursoramaScraper extends AbstractScraper
             $selectorCloseValue = WebDriverBy::cssSelector('span[data-ist-previousclose]');
             $selectorVolume = WebDriverBy::cssSelector('span[data-ist-totalvolume]');
 
-            $this->driver->wait(5)
+            $this->driver->wait(10, 25)
                 ->until(WebDriverExpectedCondition::presenceOfElementLocated($selectorVolume));
             $dataName = $this->driver->findElement($selectorName)->getDomProperty("innerText");
             $dataIsin = $this->driver->findElement($selectorIsin)->getDomProperty("innerText");
@@ -139,7 +143,7 @@ class BoursoramaScraper extends AbstractScraper
             $dataVolume = $this->driver->findElement($selectorVolume)->getDomProperty("innerText");
             // $dataTime = null; //TODO: Mettre dans date de maintenace
 
-            $this->driver->wait(5, 1)
+            $this->driver->wait(10, 25)
                 ->until(WebDriverExpectedCondition::presenceOfElementLocated($selectorVolume));
 
             $marketShareData = [ // Nomenclature relative aux tables Models de Eloquent (snake_case)
@@ -162,11 +166,13 @@ class BoursoramaScraper extends AbstractScraper
     /**
      * Extrait les données du cours d'une action précise.
      */
-    public function extractMarketShareData(MarketShare|int $marketShare): array|null
+    public function extractMarketShareData(int $marketShareId): array|null
     {
-        if(is_int($marketShare)) {
-            $marketShare = MarketShare::find($marketShare);
-        }
+        return $this->extractMarketShareDataFromUrl(MarketShare::select('url')->findOrFail($marketShareId)->url);
+    }
+
+    public function extractMarketShareDataFromModel(MarketShare $marketShare) : array|null
+    {
         return $this->extractMarketShareDataFromUrl($marketShare->url);
     }
 
@@ -181,11 +187,11 @@ class BoursoramaScraper extends AbstractScraper
         $selectorPages = WebDriverBy::cssSelector('a');
 
         // *
-        if ($this->driver->getCurrentURL() !== $URL) {
+        // if ($this->driver->getCurrentURL() !== $URL) {
             $this->driver->navigate()->to($URL);
-        }
+        // }
 
-        $this->driver->wait(5)
+        $this->driver->wait(10, 25)
             ->until(WebDriverExpectedCondition::presenceOfElementLocated($selectorPagination));
         $navigation = $this->driver->findElement($selectorPagination);
 
@@ -203,16 +209,16 @@ class BoursoramaScraper extends AbstractScraper
      */
     public function extractMarketSharesUrlsFromPage(string $URL = "https://www.boursorama.com/bourse/actions/cotations/"): array|null
     {
-        if ($this->driver->getCurrentURL() !== $URL) {
+        // if ($this->driver->getCurrentURL() !== $URL) {
             $this->driver->navigate()->to($URL);
-        }
+        // }
         // * Initialization
         $data = [];
         $selectorTable = WebDriverBy::cssSelector("table.c-table.c-table--generic.c-table--generic.c-shadow-overflow__table-fixed-column.c-table-top-flop");
         $selectorLinks = WebDriverBy::cssSelector("tr td a");
 
         // *
-        $this->driver->wait(5)
+        $this->driver->wait(10, 25)
             ->until(WebDriverExpectedCondition::presenceOfElementLocated($selectorTable));
         $table = $this->driver->findElement($selectorTable);
         $pages = $table->findElements($selectorLinks);
@@ -227,10 +233,10 @@ class BoursoramaScraper extends AbstractScraper
     // ? Pourquoi pas le sauvegarder avec comme date de départ = 1 Janvier 1970 et date de fin = SnapshotIndex snapshot_time (comme ça on est plus fiable)
     public function extractMarketShareFileFromPage(?MarketShare $marketShare, ?SnapshotIndex $snapshotIndex, string $URL = "https://www.boursorama.com/espace-membres/telecharger-cours/international") : array|null
     {
-        if($this->driver->getCurrentURL() !== $URL)
-        {
+        // if($this->driver->getCurrentURL() !== $URL)
+        // {
             $this->driver->navigate()->to($URL);
-        }
+        // }
 
         // $this->onMarketShareFileSearchFor($marketShare);
 
@@ -238,14 +244,14 @@ class BoursoramaScraper extends AbstractScraper
         $particulieresValuesSelector    = WebDriverBy::className("c-input-radio-label");
         $submitButtonSelector           = WebDriverBy::cssSelector("input[value='Télécharger']");
 
-        $this->driver->wait(5)
+        $this->driver->wait(10, 25)
             ->until(WebDriverExpectedCondition::presenceOfElementLocated($codeTextAreaSelector));
 
         $this->driver->action()
             ->sendKeys($this->driver->findElement($codeTextAreaSelector), substr($marketShare->isin, 0, 12))
             ->perform();
 
-
+        // $this->driver->
 
         return null;
     }
