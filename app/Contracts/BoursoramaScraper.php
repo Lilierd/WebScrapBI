@@ -6,12 +6,15 @@ use App\Models\MarketShare;
 use App\Models\SnapshotIndex;
 use Exception;
 use Facebook\WebDriver\Chrome\ChromeOptions;
+use Facebook\WebDriver\Exception\ElementClickInterceptedException;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Facebook\WebDriver\Remote\RemoteWebElement;
+use Facebook\WebDriver\WebDriver;
 use Facebook\WebDriver\WebDriverBy;
 use Facebook\WebDriver\WebDriverExpectedCondition;
 use Illuminate\Support\Facades\Storage;
+use League\CommonMark\Util\HtmlElement;
 
 /**
  * Une concrétisation de l'Abstraction qu'est un robot navigant sur un navigateur chrome, en l'occurence sur le site de boursorama.
@@ -47,6 +50,7 @@ class BoursoramaScraper extends AbstractScraper
      */
     public function login()
     {
+        $this->driver->navigate()->to("https://boursorama.com");
         // * Initialisation des variables
         //? Compte utilisateur
         $username                           = config('boursorama.username');
@@ -105,9 +109,9 @@ class BoursoramaScraper extends AbstractScraper
         $dataUsernameElement = $this->driver->findElement($dataUsernameSelector);
         $dataUsernameString = trim($dataUsernameElement->getDomProperty("innerText"));
 
-        $cookie = $this->driver->manage()->getCookieNamed("BRS_PROFIL");
+        // $cookie = $this->driver->manage()->getCookieNamed("BRS_PROFIL");
 
-        Storage::write("/cookie.txt", $cookie->getValue());
+        // Storage::write("/cookie.txt", $cookie->getValue());
 
         return $dataUsernameString;
     }
@@ -171,7 +175,7 @@ class BoursoramaScraper extends AbstractScraper
         return $this->extractMarketShareDataFromModel(MarketShare::select('url')->findOrFail($marketShareId)->url);
     }
 
-    public function extractMarketShareDataFromModel(MarketShare $marketShare) : array|null
+    public function extractMarketShareDataFromModel(MarketShare $marketShare): array|null
     {
         return $this->extractMarketShareDataFromUrl($marketShare->url);
     }
@@ -188,7 +192,7 @@ class BoursoramaScraper extends AbstractScraper
 
         // *
         // if ($this->driver->getCurrentURL() !== $URL) {
-            $this->driver->navigate()->to($URL);
+        $this->driver->navigate()->to($URL);
         // }
 
         $this->driver->wait(10, 25)
@@ -210,7 +214,7 @@ class BoursoramaScraper extends AbstractScraper
     public function extractMarketSharesUrlsFromPage(string $URL = "https://www.boursorama.com/bourse/actions/cotations/"): array|null
     {
         // if ($this->driver->getCurrentURL() !== $URL) {
-            $this->driver->navigate()->to($URL);
+        $this->driver->navigate()->to($URL);
         // }
         // * Initialization
         $data = [];
@@ -232,35 +236,84 @@ class BoursoramaScraper extends AbstractScraper
     //TODO: extraire le fichier et le sauvegarder en base en lien avec un snapshot Index
     // ? Pourquoi pas le sauvegarder avec comme date de départ = 1 Janvier 1970 et date de fin = SnapshotIndex snapshot_time (comme ça on est plus fiable)
     //public function extractMarketShareFileFromPage(?MarketShare $marketShare, ?SnapshotIndex $snapshotIndex, string $URL = "https://www.boursorama.com/espace-membres/telecharger-cours/international") : array|null
-    public function extractMarketShareFileFromPage(?string $marketShare, string $URL = "https://www.boursorama.com/espace-membres/telecharger-cours/international"): array|null
+    public function extractMarketShareFileFromPage(MarketShare $marketShare, string $URL = "https://www.boursorama.com/espace-membres/telecharger-cours/international", bool $force = false): array|null
     {
-        // if($this->driver->getCurrentURL() !== $URL)
-        // {
-            $this->driver->navigate()->to($URL);
-        // }
+        // * Gestion de l'iframe de merde qui bloque le clic de la souris vers le bouton
+        try {
+            if ($this->driver->getCurrentURL() !== $URL) {
+                $this->driver->navigate()->to($URL);
+            }
+            $script =
+<<<SCRIPT
+return document.getElementsByClassName('wall-banner').forEach(e => e.remove());
+SCRIPT;
+            // $this->onMarketShareFileSearchFor($marketShare);
 
-        // $this->onMarketShareFileSearchFor($marketShare);
+            $codeTextAreaSelector           = WebDriverBy::id("quote_search_customIndexesList");
+            $particulieresValuesSelector    = WebDriverBy::className("c-input-radio-label");
+            $fileformatSelector             = WebDriverBy::cssSelector("div[aria-labelledby]");
+            $excelSelector                  = WebDriverBy::cssSelector("div[data-value='WALDATA']");
+            $submitButtonSelector           = WebDriverBy::cssSelector("input[value='Télécharger']");
+            $calendarButtonSelector         = WebDriverBy::cssSelector("button[data-brs-datepicker-opener]");
+            $todaySelector                  = WebDriverBy::cssSelector("td.active.day");
 
-        $codeTextAreaSelector           = WebDriverBy::id("quote_search_customIndexesList");
-        $particulieresValuesSelector    = WebDriverBy::className("c-input-radio-label");
-        $submitButtonSelector           = WebDriverBy::cssSelector("input[value='Télécharger']");
+            $this->driver->wait(10, 25)
+                ->until(WebDriverExpectedCondition::presenceOfElementLocated($particulieresValuesSelector));
 
-        $this->driver->wait(10, 25)
-            ->until(WebDriverExpectedCondition::presenceOfElementLocated($codeTextAreaSelector));
-        $this->driver->findElement($codeTextAreaSelector);
+            $this->driver->findElements($particulieresValuesSelector)[1]
+                ->click();
+            // sleep(2);
 
-        $this->driver->action()
-            ->sendKeys($this->driver->findElement($codeTextAreaSelector), substr($marketShare, 0, 12)) //->sendKeys($this->driver->findElement($codeTextAreaSelector), substr($marketShare->isin, 0, 12))
-            ->perform();
+            $this->driver->wait(10, 25)
+                ->until(WebDriverExpectedCondition::presenceOfElementLocated($codeTextAreaSelector));
+
+            // $this->driver->findElement($codeTextAreaSelector)->clear();
+            $this->driver->action()
+                ->sendKeys($this->driver->findElement($codeTextAreaSelector), $marketShare->code) //->sendKeys($this->driver->findElement($codeTextAreaSelector), substr($marketShare->isin, 0, 12))
+                ->perform();
+
+            //* File format selector
+            $this->driver->findElements($fileformatSelector)[4]
+                ->click();
+            $this->driver->wait(10, 25)
+                ->until(WebDriverExpectedCondition::presenceOfElementLocated($excelSelector));
+            $this->driver->findElement($excelSelector)
+                ->click();
+
+            //* Choix de la date
+            $this->driver->findElement($calendarButtonSelector)
+                ->click();
+
+            $this->driver->wait(10, 25)
+                ->until(WebDriverExpectedCondition::presenceOfElementLocated($todaySelector));
+            $todayDate = $this->driver->findElement($todaySelector)->getDomProperty("data-date");
+
+            $yesterdayDate = intval($todayDate) - 86400000;
+
+            $yesterdaySelector = WebDriverBy::cssSelector("td[data-date='{$yesterdayDate}']");
+            $this->driver->findElement($yesterdaySelector)
+                ->click();
 
 
-        $this->driver->action()->moveToElement($this->driver->findElement($submitButtonSelector));
-        $this->driver->findElement($submitButtonSelector)
-            ->click();
 
-        sleep(2);
+            // * Clic sur "Télécharger"
+            $this->driver->findElement($submitButtonSelector)
+                ->click();
+        } catch (ElementClickInterceptedException $exceptionPopupDeMerde) {
+            if (!$force) {
+                // * Si une popup de merde bloque le clic, on éxecute un script qui doit NORMALEMENT la supprimer (28/03/2024) et on relance l'action de clic
+                dump("Executing antipopup script", $this->driver->executeScript($script));
+                dump("Retrying one last time");
+                return $this->extractMarketShareFileFromPage(marketShare: $marketShare, URL: $URL, force: true);
+            }
+        } catch (Exception $e) { // * Si y'a un autre problème on throw
+            throw $e;
+        }
 
-        $this->seleniumGridDownloadFiles(".");
+        // sleep(2); // Wait for download to finish
+
+
+        $this->seleniumGridDownloadFiles($marketShare);
 
         return null;
     }

@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Contracts\BoursoramaScraper;
+use App\Models\MarketShare;
 use Illuminate\Console\Command;
 
 class GetFile extends Command
@@ -24,14 +25,15 @@ class GetFile extends Command
     /**
      * Execute the console command.
      */
-    public function handle(BoursoramaScraper $boursoramaScraper)
+    public function handle()
     {
+        $boursoramaScraper = new BoursoramaScraper();
         // * Logging in
         $this->info("Logging in user");
         $username = $boursoramaScraper->login();
         $this->comment("Username is : {$username}");
 
-        $boursoramaScraper->extractMarketShareFileFromPage("1rPAB");
+        $boursoramaScraper->extractMarketShareFileFromPage(MarketShare::find(1));
 
     }
 }

@@ -60,6 +60,8 @@ services:
             - 'SE_VNC_PASSWORD=${SAIL_VNC_PASSWORD:-putasse}'
             - 'SE_VNC_VIEW_ONLY=${SAIL_VNC_VIEW_ONLY:-true}'
             - 'SE_START_VNC=${APP_DEBUG}'
+            - 'SE_OPTS=--downloads-path /home/seluser/'
+            - 'SE_OPTS=--enable-managed-downloads true'
         volumes:
             - '/dev/shm:/dev/shm'
         networks:

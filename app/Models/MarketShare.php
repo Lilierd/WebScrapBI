@@ -15,6 +15,14 @@ class MarketShare extends Model
         'url'
     ];
 
+    /**
+     * Créer dynamiquement une propriété sur les objets marketShare,
+     * accessible depuis :
+     *
+     * $marketShare->code
+     *
+     * @return string
+     */
     public function getCodeAttribute() : string
     {
         return substr($this->isin, 0, 12);
