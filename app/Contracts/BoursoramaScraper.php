@@ -286,9 +286,10 @@ SCRIPT;
 
             $this->driver->wait(10, 25)
                 ->until(WebDriverExpectedCondition::presenceOfElementLocated($todaySelector));
-            $todayDate = $this->driver->findElement($todaySelector)->getDomProperty("data-date");
+            $todayDate = $this->driver->findElement($todaySelector)->getAttribute("data-date");
 
-            $yesterdayDate = intval($todayDate) - 86400000;
+            dump($todayDate);
+            $yesterdayDate = intval(intval($todayDate ?? 0) - 86400000);
 
             $yesterdaySelector = WebDriverBy::cssSelector("td[data-date='{$yesterdayDate}']");
             $this->driver->findElement($yesterdaySelector)
