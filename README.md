@@ -12,12 +12,18 @@ docker run --rm \
     -w /var/www/html \
     laravelsail/php83-composer:latest \
     composer install --ignore-platform-reqs
+
+cp .env.example .env
+
+./vendor/bin/sail artisan key:generate
 ```
 # Lancer les services
 `cd laravel-application && ./vendor/bin/sail up -d`
 
 # Arrêter les services
 `cd laravel-application && ./vendor/bin/sail down`
+
+
 
 # Services
 ## Laravel (Sail)
