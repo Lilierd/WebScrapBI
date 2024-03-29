@@ -13,6 +13,7 @@ use Facebook\WebDriver\Remote\RemoteWebElement;
 use Facebook\WebDriver\WebDriver;
 use Facebook\WebDriver\WebDriverBy;
 use Facebook\WebDriver\WebDriverExpectedCondition;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use League\CommonMark\Util\HtmlElement;
 
@@ -243,12 +244,10 @@ class BoursoramaScraper extends AbstractScraper
             if ($this->driver->getCurrentURL() !== $URL) {
                 $this->driver->navigate()->to($URL);
             }
-            $script =
-<<<SCRIPT
+            $script = <<<SCRIPT
 return document.getElementsByClassName('wall-banner').forEach(e => e.remove());
 SCRIPT;
-            // $this->onMarketShareFileSearchFor($marketShare);
-
+            // dump("Executing antipopup script", $this->driver->executeScript($script));
             $codeTextAreaSelector           = WebDriverBy::id("quote_search_customIndexesList");
             $particulieresValuesSelector    = WebDriverBy::className("c-input-radio-label");
             $fileformatSelector             = WebDriverBy::cssSelector("div[aria-labelledby]");
@@ -288,14 +287,12 @@ SCRIPT;
                 ->until(WebDriverExpectedCondition::presenceOfElementLocated($todaySelector));
             $todayDate = $this->driver->findElement($todaySelector)->getAttribute("data-date");
 
-            dump($todayDate);
+            // dump($todayDate);
             $yesterdayDate = intval(intval($todayDate ?? 0) - 86400000);
 
             $yesterdaySelector = WebDriverBy::cssSelector("td[data-date='{$yesterdayDate}']");
             $this->driver->findElement($yesterdaySelector)
                 ->click();
-
-
 
             // * Clic sur "Télécharger"
             $this->driver->findElement($submitButtonSelector)
@@ -303,19 +300,40 @@ SCRIPT;
         } catch (ElementClickInterceptedException $exceptionPopupDeMerde) {
             if (!$force) {
                 // * Si une popup de merde bloque le clic, on éxecute un script qui doit NORMALEMENT la supprimer (28/03/2024) et on relance l'action de clic
-                dump("Executing antipopup script", $this->driver->executeScript($script));
+                // dump("Executing antipopup script", $this->driver->executeScript($script));
+
                 dump("Retrying one last time");
                 return $this->extractMarketShareFileFromPage(marketShare: $marketShare, URL: $URL, force: true);
+
             }
         } catch (Exception $e) { // * Si y'a un autre problème on throw
             throw $e;
+        } finally {
+
+            $absoluteFilePath = $this->seleniumGridDownloadFiles($marketShare);
+            dump($absoluteFilePath);
+            $fileContent = File::get($absoluteFilePath);
+
+            // dump($fileContent);
+
+            $rawFileArray = preg_split('/(;|\r\n)/', $fileContent);
+            $fileArray = array_chunk(
+                array: [
+                    'code',
+                    'update_date',
+                    'data_1',
+                    'data_2',
+                    'data_3',
+                    'data_4',
+                    'volume',
+                    'currency',
+                    ...$rawFileArray
+                ],
+                length: 8
+            );
+            dump($fileArray);
+            //8headers
+            return $fileArray;
         }
-
-        // sleep(2); // Wait for download to finish
-
-
-        $this->seleniumGridDownloadFiles($marketShare);
-
-        return null;
     }
 }

@@ -13,8 +13,7 @@ use Illuminate\Http\File;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\Console\Output\OutputInterface;
-
-
+use ZipArchive;
 
 /**
  * Un scraper basé sur Selenium
@@ -109,13 +108,19 @@ abstract class AbstractScraper
         return config('selenium.server_url', "http://selenium:4444");
     }
 
-    protected function seleniumGridDownloadFiles(MarketShare $marketShare): void
+    protected function seleniumGridDownloadFiles(MarketShare $marketShare): string|null
     {
-        dump("seleniumGridDownloadFiles");
         //Get files names from selenium grid
+        dump("seleniumGridDownloadFiles waiting");
+        sleep(5);
         $files = $this->driver->executeCustomCommand('/session/:sessionId/se/files');
-        dump($files);
+
+        // dump($files);
         // For multiple files if needed
+        // * Saved file name in Laravel
+        $fileName = "$marketShare->code" . DIRECTORY_SEPARATOR . Carbon::parse(now())->format("Y-m-d_H-i");
+        $zipFileName = "{$fileName}.zip";
+        $txtFileName = "{$fileName}.txt";
         foreach ($files['names'] as $file) {
             // Set file to download
             $file_to_download = [
@@ -124,42 +129,29 @@ abstract class AbstractScraper
 
             // Get file content from selenium grid to local
             $file_content = $this->driver->executeCustomCommand('/session/:sessionId/se/files', 'POST', $file_to_download);
+            // dump($file_content);
+            // dump($fileObject);
+            $file_content_encoded = $file_content['contents'];
 
-            $file_content_content = $file_content['contents'];
-            dump($file_content_content);
-
-            if(!Storage::disk('local')->exists($marketShare->code)) {
-                Storage::disk('local')->makeDirectory($marketShare->code);
+            $zipfilePath = Storage::disk('public')->path($zipFileName);
+            $txtfilePath = Storage::disk('public')->path($txtFileName);
+            // * Check directory
+            if (!Storage::disk('public')->exists($marketShare->code)) {
+                Storage::disk('public')->makeDirectory($marketShare->code);
             }
-            // Save file in Laravel
-            $fileName = "$marketShare->code".DIRECTORY_SEPARATOR.Carbon::parse(now())->format("Y-m-d_H-i");
-            $filePath = Storage::disk('local')->path($fileName);
-            $filePathSavedInLaravel = Storage::disk('local')->put(
-                path: $filePath,
-                contents: $file_content_content
-            );
-            //file_put_contents($default_path . "/" . $file, $file_content['contents']);
-
-            sleep(2);
-
-            dump($filePath);
-            // Decode and unzip file
-            $this->seleniumSystemDecode64Unzip($filePath);
+            // * Saved temp file
+            $file_content_decoded = base64_decode($file_content_encoded);
+            dump(Storage::disk('public')->put(path: $zipFileName, contents: $file_content_decoded));
+            // * Dezip
+            // dump(Storage::disk('public')->get(path: $zipFileName));
+            $zip = new ZipArchive;
+            $zip->open(public_path('storage' . DIRECTORY_SEPARATOR . $zipFileName));
+            $textFile = $zip->getFromIndex(0);
+            // $zip->extractTo(Storage::disk('public')->path($marketShare->code));
+            $zip->close();
+            Storage::disk('public')->put(path: $txtFileName, contents: $textFile);
+            Storage::disk('public')->delete($zipFileName);
         }
-    }
-
-    protected function seleniumSystemDecode64Unzip(string $path_filename): void
-    {
-        // Decode base64
-        system("base64 -d " . $path_filename . " > " . $path_filename . ".decoded");
-
-        // Saves decoded file to original file
-        system("mv " . $path_filename . ".decoded" . " " . $path_filename);
-
-        // Unzip file
-        system("zcat " . $path_filename . " > " . $path_filename . ".decoded");
-
-        // Saves unzipped file to original file
-        system("mv " . $path_filename . ".decoded" . " " . $path_filename);
+        return Storage::disk('public')->path($txtFileName);
     }
 }
