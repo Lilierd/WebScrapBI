@@ -233,7 +233,7 @@ class Aggregate extends Command
                 $marketSharesUrls = array_merge($marketSharesUrls, $_marketSharesUrls);
             });
         } else { // * Version sans progressbar
-            foreach ($marketSharesUrls as $page) {
+            foreach ($pages as $page) {
                 $_marketSharesUrls = $boursoramaScraper->extractMarketSharesUrlsFromPage($page);
                 $marketSharesUrls = array_merge($marketSharesUrls, $_marketSharesUrls);
             }
