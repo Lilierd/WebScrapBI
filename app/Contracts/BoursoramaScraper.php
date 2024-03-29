@@ -317,22 +317,24 @@ SCRIPT;
             // dump($fileContent);
 
             $rawFileArray = preg_split('/(;|\r\n)/', $fileContent);
+            $headers = [
+                'code',
+                'update_date',
+                'data_1',
+                'data_2',
+                'data_3',
+                'data_4',
+                'volume',
+                'currency'
+            ];
             $fileArray = array_chunk(
                 array: [
-                    'code',
-                    'update_date',
-                    'data_1',
-                    'data_2',
-                    'data_3',
-                    'data_4',
-                    'volume',
-                    'currency',
+                    ...$headers,
                     ...$rawFileArray
                 ],
-                length: 8
+                length: count($headers),
             );
             dump($fileArray);
-            //8headers
             return $fileArray;
         }
     }
