@@ -12,5 +12,7 @@
 
     {!! $childComponent !!}
 
+
+    <iframe src="http://selenium:79000&password=secret"></iframe>
 </body>
 </html>

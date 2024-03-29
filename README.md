@@ -16,6 +16,8 @@ docker run --rm \
 cp .env.example .env
 
 ./vendor/bin/sail artisan key:generate
+
+./vendor/bin/sail artisan migrate:fresh
 ```
 # Lancer les services
 `cd laravel-application && ./vendor/bin/sail up -d`
