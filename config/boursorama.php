@@ -2,7 +2,7 @@
 
 return [
     'base_url'              => env('BOURSORAMA_BASE_URL', 'https://boursorama.com'),
-    'username'              => env('BOURSORAMA_USENAME', "Muntz"),
+    'username'              => env('BOURSORAMA_USERNAME', "Muntz"),
     'password'              => env('BOURSORAMA_PASSWORD', "Webscraping2024!"),
     'known' => [
         '1rPADOC',
