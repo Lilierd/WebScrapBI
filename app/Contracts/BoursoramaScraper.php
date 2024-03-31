@@ -338,4 +338,19 @@ SCRIPT;
             return $fileArray;
         }
     }
+
+    public function extractForumMessagesFromPage(MarketShare $marketShare)
+    {
+        try
+        {
+            if ($this->driver->getCurrentURL() !== $marketShare->url) {
+                $this->driver->navigate()->to($marketShare->url);
+            }
+
+            //TODO: la fo fer le code de recup
+        } catch (Exception $e)
+        {
+            dump($e);
+        }
+    }
 }
