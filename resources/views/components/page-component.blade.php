@@ -8,11 +8,12 @@
 </head>
 <body>
 
+    <iframe height="480px"
+            width="720px"
+            src="{{ env('APP_URL') . ':7900?password=' . env('SAIL_VNC_PASSWORD') . '&autoconnect=1&resize=scale' }}"></iframe>
+
     <h1> {{ $title }} </h1>
 
     {!! $childComponent !!}
-
-
-    <iframe src="http://selenium:79000&password=secret"></iframe>
 </body>
 </html>
