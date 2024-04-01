@@ -289,11 +289,11 @@ class Aggregate extends Command
             }, ARRAY_FILTER_USE_KEY);
 
             $marketShare = MarketShare::updateOrCreate($filteredMs);
-            // MarketShareSnapshot::create([
-            //     ...$filteredMsp,
-            //     'snapshot_index_id' => $snapshotIndex->id,
-            //     'market_share_id'   => $marketShare->id
-            // ]);
+            MarketShareSnapshot::create([
+                ...$filteredMsp,
+                'snapshot_index_id' => $snapshotIndex->id,
+                'market_share_id'   => $marketShare->id
+            ]);
         });
         $this->newLine();
         $this->comment("While traversing, saved found Market Shares data under SnapshotIndex: {$snapshotIndex->id}.");
