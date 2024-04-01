@@ -1,6 +1,10 @@
-
+# WebScrapBI
+### Projet de
+- CATOIS Baptiste
+- MERLETTE Bastien
 
 # Comment installer le projet
+## Commandes
 ```bash
 git clone https://github.com/Lilierd/WebScrapBI laravel-application
 
@@ -17,19 +21,32 @@ cp .env.example .env
 
 ./vendor/bin/sail artisan key:generate
 
-./vendor/bin/sail artisan migrate:fresh
+./vendor/bin/sail artisan migrate:fresh # Création de la base de données (permet une réinitialisation également)
+
+./vendor/bin/sail artisan storage:link  # Permet de lier le stockage local avec le stockage du docker.
 ```
-# Lancer les services
+## Editions particulières
+ATTENTION : ne pas oublier de mettre à jour les variables du .env (l'utilisateur Boursorama possède une valeur par défaut et est donc optionnel).
+
+# Exploitation
+## Commandes
+### Lancer les services
 `cd laravel-application && ./vendor/bin/sail up -d`
-
-# Arrêter les services
+### Arrêter les services
 `cd laravel-application && ./vendor/bin/sail down`
-
-
+### Commande d'exécution principale du programme
+`cd laravel-application && ./vendor/bin/sail boursorama:aggregate`
+- `-h` : Obtenir l'aide à l'exécution
+- `--fresh` : Récupérer l'ensemble des actions de la page d'accueil
+- `-vvv` : Exécuter en mode **très verbeux**
+- `--ms=<Nom de l'action>` : Récupérer les valeurs d'une action particulière
+## Chemins des fichiers de téléchargement
+Toutes les données téléchargées par l'application sont stockées dans :
+`laravel-application/storage/app/public`
 
 # Services
 ## Laravel (Sail)
-- http://localhost:8080/
+- http://localhost:8080/ (Page de navigation pour visualiser les données récoltées)
 ## MySQL
 Par défaut :
 - localhost:3306
