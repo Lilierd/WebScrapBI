@@ -66,22 +66,22 @@ services:
             - '/dev/shm:/dev/shm'
         networks:
             - sail
-    phpmyadmin:
-        image: phpmyadmin
-        ports:
-            - 8081:81
-        environment:
-            - MYSQL_USER=${DB_USERNAME}
-            - MYSQL_PASSWORD=${DB_PASSWORD}
-            - PMA_HOSTS=${DB_HOST}
-            - PMA_PORTS=${DB_PORT}
-            - APACHE_PORT=81
-            - PMA_ARBITRARY=0
-        restart: always
-        depends_on:
-            - mysql
-        networks:
-            - sail
+    # phpmyadmin:
+    #     image: phpmyadmin
+    #     ports:
+    #         - 8081:81
+    #     environment:
+    #         - MYSQL_USER=${DB_USERNAME}
+    #         - MYSQL_PASSWORD=${DB_PASSWORD}
+    #         - PMA_HOSTS=${DB_HOST}
+    #         - PMA_PORTS=${DB_PORT}
+    #         - APACHE_PORT=81
+    #         - PMA_ARBITRARY=0
+    #     restart: always
+    #     depends_on:
+    #         - mysql
+    #     networks:
+    #         - sail
 networks:
     sail:
         driver: bridge
