@@ -164,7 +164,7 @@ class Aggregate extends Command
 
         if($this->output->isVeryVerbose()) {
             $this->withProgressBar($resolved, function (MarketShare $marketShare) use ($snapshotIndex, $boursoramaScraper) {
-                // $this->output->write(" Processing {$marketShareID}");
+                $this->output->write(" Processing {$marketShare->getKey()}");
 
                 $data = $boursoramaScraper->extractMarketShareDataFromModel($marketShare);
 

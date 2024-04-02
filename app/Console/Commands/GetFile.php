@@ -35,8 +35,11 @@ class GetFile extends Command
         $username = $boursoramaScraper->login();
         $this->comment("Username is : {$username}");
 
+        // $marketShare = $this->choice([
+
+        // ])::find(1);
+        // dump($marketShare);
         $marketShare = MarketShare::find(1);
-        dump($marketShare);
 
         $fileArray = $boursoramaScraper->extractMarketShareFileFromPage($marketShare);
         dump($fileArray);

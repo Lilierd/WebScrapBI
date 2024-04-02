@@ -12,7 +12,15 @@ html {
     margin: 0px;
     padding: 0px;
 
+    & .htmx-request {
+        /* background-color: red !important; */
+        opacity: 0.8 !important;
+        transition: all ease-in-out 0.25s;
+    }
+
     body {
+        opacity: 1;
+        transition: opacity ease-in-out 1s;
         position: relative;
         margin: 0px;
         padding: 0px;
@@ -20,6 +28,19 @@ html {
         display: flex;
         flex-direction: column;
         flex-grow: 1;
+
+        &[disabled] {
+
+            opacity: 0.5 !important;
+            /* transition: all ease-in-out 0.25s; */
+            & a {
+                pointer-events: none;
+            }
+
+        }
+
+
+
 
         /**
          * HEADER
@@ -94,6 +115,7 @@ html {
             color: black;
 
             & section {
+
                 padding: 1em;
                 box-shadow: 5px 10px 15px 5px rgba(0, 0, 0, 0.75);
                 border-radius: 15px;
@@ -128,6 +150,8 @@ html {
                 &:nth-child(2) {
                     background-color: black;
                     color: white;
+                    opacity: 1;
+
 
                     & ul {
                         list-style: decimal;
