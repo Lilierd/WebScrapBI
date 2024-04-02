@@ -11,6 +11,7 @@ html {
 
     margin: 0px;
     padding: 0px;
+
     body {
         position: relative;
         margin: 0px;
@@ -19,23 +20,41 @@ html {
         display: flex;
         flex-direction: column;
         flex-grow: 1;
+
         /**
          * HEADER
          **/
         & header {
+            padding: 0.5em;
             position: relative;
             display: flex;
             flex-grow: 0;
             flex-direction: row;
-            justify-content: center;
+            justify-content: space-between;
+            align-items: center;
             box-sizing: border-box;
-            margin: 0px;
-            padding: 0px;
             background-color: black;
             color: white;
             text-transform: uppercase;
             box-shadow: 5px 10px 15px 5px rgba(0, 0, 0, 0.75);
+
+            & * {
+                display: flex;
+                flex-direction: column;
+                /* flex-grow: 1; */
+                text-align: center;
+
+                & a {
+                    cursor: pointer;
+
+                    &:hover {
+                        color: lightgreen;
+                    }
+                }
+            }
+
         }
+
         /**
          * FOOTER
          **/
@@ -53,6 +72,7 @@ html {
             margin: 0px;
             padding: 0px;
         }
+
         /**
          * WRAPPER CONTENU PRINCIPAL
          **/
@@ -64,7 +84,8 @@ html {
             display: flex;
             flex-direction: row;
 
-            height: 0; /* ? WTF */
+            height: 0;
+            /* ? WTF */
             flex-grow: 1;
             flex-shrink: 1;
             flex-wrap: nowrap;
@@ -73,6 +94,7 @@ html {
             color: black;
 
             & section {
+                padding: 1em;
                 box-shadow: 5px 10px 15px 5px rgba(0, 0, 0, 0.75);
                 border-radius: 15px;
                 position: relative;
@@ -82,10 +104,12 @@ html {
                 display: flex;
                 flex-direction: column;
                 box-sizing: border-box;
+
                 &:nth-child(1) {
                     @media screen and (max-width: 720px) {
                         display: none;
                     }
+
                     justify-content: center;
 
                     &:hover {
@@ -97,11 +121,14 @@ html {
                     & iframe {
                         opacity: 0.5;
                     }
+
                     background-color: black;
                 }
+
                 &:nth-child(2) {
                     background-color: black;
                     color: white;
+
                     & ul {
                         list-style: decimal;
 
@@ -128,6 +155,15 @@ html {
                             }
                         }
                     }
+
+                    table {
+                        table-layout: fixed;
+
+                        & td,
+                        th {
+                            border: 1px dashed white;
+                        }
+                    }
                 }
             }
         }
@@ -135,5 +171,3 @@ html {
 
     }
 }
-
-

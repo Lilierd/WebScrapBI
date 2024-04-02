@@ -7,6 +7,7 @@ use App\Models\MarketShareSnapshot;
 use App\Models\SnapshotIndex;
 use App\View\Components\ListComponent;
 use App\View\Components\PageComponent;
+use App\View\Components\TableComponent\Index;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Response;
@@ -72,7 +73,25 @@ class MarketShareSnapshotController extends Controller
      */
     public function show(MarketShareSnapshot $marketShareSnapshot)
     {
-        return $marketShareSnapshot;
+        $attributes = $marketShareSnapshot->only([
+            'volume',
+            'last_value',
+            'open_value',
+            'close_value',
+            'high_value',
+            'low_value'
+        ]);
+        return Response::make(
+            Blade::renderComponent(
+                new PageComponent(
+                    title: "Snapshots du {$marketShareSnapshot->snapshotIndex->snapshot_time->format('Y-m-d H:i')} concernant {$marketShareSnapshot->marketShare->code} :",
+                    childComponent: Blade::renderComponent(new Index(
+                        headers: array_keys($attributes),
+                        rows: [$attributes],
+                    )),
+                )
+            )
+        );
     }
 
     /**
