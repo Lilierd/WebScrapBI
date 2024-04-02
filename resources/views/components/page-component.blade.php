@@ -8,7 +8,6 @@
     <meta http-equiv="X-UA-Compatible"
           content="ie=edge">
     <title>Document</title>
-
     @vite(['resources/css/app.css'])
   </head>
 
@@ -25,9 +24,7 @@
                 src="{{ env('APP_URL') . ':7900?password=' . env('SAIL_VNC_PASSWORD') . '&autoconnect=1&resize=scale' }}"></iframe>
       </section>
       <section>
-        {{-- <div class="overflow-wrapper"> --}}
             {!! $childComponent !!}
-        {{-- </div> --}}
       </section>
     </main>
 
@@ -35,5 +32,4 @@
       <p>©️ EICNAM 2024</p>
     </footer>
   </body>
-
 </html>
