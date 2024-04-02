@@ -1,19 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+
+  <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible"
+          content="ie=edge">
     <title>Document</title>
-</head>
-<body>
+    @vite(['resources/css/app.css'])
+  </head>
 
-    <iframe height="480px"
-            width="720px"
-            src="{{ env('APP_URL') . ':7900?password=' . env('SAIL_VNC_PASSWORD') . '&autoconnect=1&resize=scale' }}"></iframe>
+  <body>
+    <header>
+      <h1> {{ $title }} </h1>
+    </header>
+    <main>
+      <section>
 
-    <h1> {{ $title }} </h1>
+        <iframe
+                height="480px"
+                width="720px"
+                src="{{ env('APP_URL') . ':7900?password=' . env('SAIL_VNC_PASSWORD') . '&autoconnect=1&resize=scale' }}"></iframe>
+      </section>
+      <section>
+            {!! $childComponent !!}
+      </section>
+    </main>
 
-    {!! $childComponent !!}
-</body>
+    <footer>
+      <p>©️ EICNAM 2024</p>
+    </footer>
+  </body>
 </html>

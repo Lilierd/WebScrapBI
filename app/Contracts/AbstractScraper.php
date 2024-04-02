@@ -112,10 +112,10 @@ abstract class AbstractScraper
     {
         //Get files names from selenium grid
         dump("seleniumGridDownloadFiles waiting");
-        sleep(5);
+        sleep(10);
         $files = $this->driver->executeCustomCommand('/session/:sessionId/se/files');
 
-        // dump($files);
+        dump($files);
         // For multiple files if needed
         // * Saved file name in Laravel
         $fileName = "$marketShare->code" . DIRECTORY_SEPARATOR . Carbon::parse(now())->format("Y-m-d_H-i");
@@ -144,7 +144,7 @@ abstract class AbstractScraper
             dump(Storage::disk('public')->put(path: $zipFileName, contents: $file_content_decoded));
             // * Dezip
             // dump(Storage::disk('public')->get(path: $zipFileName));
-            $zip = new ZipArchive;
+            $zip = new ZipArchive();
             $zip->open(public_path('storage' . DIRECTORY_SEPARATOR . $zipFileName));
             $textFile = $zip->getFromIndex(0);
             // $zip->extractTo(Storage::disk('public')->path($marketShare->code));
