@@ -347,7 +347,20 @@ SCRIPT;
                 $this->driver->navigate()->to($marketShare->url);
             }
 
+            $allMessagesSelector    = WebDriverBy::className("c-message");
+            $messageTitleSelector   = WebDriverBy::cssSelector("a.c-link.c-link--regular.c-link--neutral.c-link--bold.c-link--no-underline");
+            $messageContentSelector = WebDriverBy::cssSelector("p.c-message__text.o-ellipsis-multiline-2");
+            $messageAuthorSelector  = WebDriverBy::cssSelector("button.c-link.c-link--animated.c-link--xx-small.c-source__username.c-source__username--xx-small");
+            $messageDateSelector    = WebDriverBy::cssSelector("span.c-source__time"); //! Y en a plusieurs (date et heure non combinés)
+
+            $this->driver->wait(10, 25)
+                ->until(WebDriverExpectedCondition::presenceOfElementLocated($allMessagesSelector));
+            $allMessages = $this->driver->findElement($allMessagesSelector)->getDomProperty("innerText");
+
+            return $allMessages;
+
             //TODO: la fo fer le code de recup
+            // ! Faut naviguer sur chaque message et cliquer dessus pour avoir le contenu
         } catch (Exception $e)
         {
             dump($e);
