@@ -351,19 +351,26 @@ SCRIPT;
             $messageTitleSelector   = WebDriverBy::cssSelector("a.c-link.c-link--regular.c-link--neutral.c-link--bold.c-link--no-underline");
             $messageContentSelector = WebDriverBy::cssSelector("p.c-message__text.o-ellipsis-multiline-2");
             $messageAuthorSelector  = WebDriverBy::cssSelector("button.c-link.c-link--animated.c-link--xx-small.c-source__username.c-source__username--xx-small");
-            $messageDateSelector    = WebDriverBy::cssSelector("span.c-source__time"); //! Y en a plusieurs (date et heure non combinés)
+            $messageDateSelector    = WebDriverBy::cssSelector("span.c-source__time");
 
             $this->driver->wait(10, 25)
                 ->until(WebDriverExpectedCondition::presenceOfElementLocated($allMessagesSelector));
-            $allMessages = $this->driver->findElement($allMessagesSelector)->getDomProperty("innerText");
+            // $allMessages = $this->driver->findElement($allMessagesSelector)->getDomProperty("innerText");
 
-            return $allMessages;
+            $messagesArray = [];
+            foreach($this->driver->findElements($allMessagesSelector) as $message) {
+                $messagesArray[] = [
+                    'title'     => strip_tags($message->findElement($messageTitleSelector)->getDomProperty('innerText')),
+                    'content'   => strip_tags($message->findElement($messageContentSelector)->getDomProperty('innerText')),
+                    'author'    => strip_tags($message->findElement($messageAuthorSelector)->getDomProperty('innerText')),
+                    'date'      => strip_tags($message->findElement($messageDateSelector)->getDomProperty('innerText'))
+                ];
+            }
 
-            //TODO: la fo fer le code de recup
-            // ! Faut naviguer sur chaque message et cliquer dessus pour avoir le contenu
+            return $messagesArray;
         } catch (Exception $e)
         {
-            dump($e);
+            throw $e;
         }
     }
 }
