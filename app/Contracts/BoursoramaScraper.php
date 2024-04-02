@@ -304,7 +304,6 @@ SCRIPT;
 
                 dump("Retrying one last time");
                 return $this->extractMarketShareFileFromPage(marketShare: $marketShare, URL: $URL, force: true);
-
             }
         } catch (Exception $e) { // * Si y'a un autre problème on throw
             throw $e;
@@ -339,37 +338,65 @@ SCRIPT;
         }
     }
 
-    public function extractForumMessagesFromPage(MarketShare $marketShare)
+    public function extractForumMessagesUrlFromPage(MarketShare $marketShare)
     {
-        try
-        {
-            if ($this->driver->getCurrentURL() !== $marketShare->url) {
+        try {
+            if ($this->driver->getCurrentURL() !== $marketShare->url)
                 $this->driver->navigate()->to($marketShare->url);
-            }
 
+            //? MarketShare page
             $allMessagesSelector    = WebDriverBy::className("c-message");
-            $messageTitleSelector   = WebDriverBy::cssSelector("a.c-link.c-link--regular.c-link--neutral.c-link--bold.c-link--no-underline");
-            $messageContentSelector = WebDriverBy::cssSelector("p.c-message__text.o-ellipsis-multiline-2");
-            $messageAuthorSelector  = WebDriverBy::cssSelector("button.c-link.c-link--animated.c-link--xx-small.c-source__username.c-source__username--xx-small");
-            $messageDateSelector    = WebDriverBy::cssSelector("span.c-source__time");
+            $messageLinkSelector   = WebDriverBy::cssSelector("a.c-link.c-link--regular.c-link--neutral.c-link--bold.c-link--no-underline");
 
             $this->driver->wait(10, 25)
                 ->until(WebDriverExpectedCondition::presenceOfElementLocated($allMessagesSelector));
             // $allMessages = $this->driver->findElement($allMessagesSelector)->getDomProperty("innerText");
 
+            $urlArray = [];
+            foreach ($this->driver->findElements($allMessagesSelector) as $message) {
+                //TODO : récup l'URL de chaque message puis refaire une boucle pour naviguer sur chaque msg
+
+                $urlArray[] = $message->findElement($messageLinkSelector)->getDomProperty("href");
+            }
+
+            dump($urlArray);
+
+            return $urlArray;
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
+
+    public function extractForumMessagesFromPage(MarketShare $marketShare)
+    {
+        $urlArray = $this->extractForumMessagesUrlFromPage($marketShare);
+
+        try {
+            //? Message page
+            $messageTitleSelector = WebDriverBy::cssSelector("h1.c-title");
+            $messageContentSelector = WebDriverBy::cssSelector("p.c-message__text.c-message__text--shifted");
+            $messageAuthorSelector  = WebDriverBy::cssSelector("button[data-popover-target-class='c-profile-light']");
+            $messageDateSelector    = WebDriverBy::cssSelector("span.c-source__time");
+
             $messagesArray = [];
-            foreach($this->driver->findElements($allMessagesSelector) as $message) {
+            foreach ($urlArray as $url) {
+                $this->driver->navigate()->to($url);
+
+                $this->driver->wait(10, 25)
+                    ->until(WebDriverExpectedCondition::presenceOfElementLocated($messageAuthorSelector));
+
+                //$this->driver->executeScript("arguments[0].scrollIntoView();", );
+
                 $messagesArray[] = [
-                    'title'     => strip_tags($message->findElement($messageTitleSelector)->getDomProperty('innerText')),
-                    'content'   => strip_tags($message->findElement($messageContentSelector)->getDomProperty('innerText')),
-                    'author'    => strip_tags($message->findElement($messageAuthorSelector)->getDomProperty('innerText')),
-                    'date'      => strip_tags($message->findElement($messageDateSelector)->getDomProperty('innerText'))
+                    'title'     => strip_tags($this->driver->findElement($messageTitleSelector)->getDomProperty('innerText')),
+                    'content'   => strip_tags($this->driver->findElement($messageContentSelector)->getDomProperty('innerText')),
+                    'author'    => strip_tags($this->driver->findElement($messageAuthorSelector)->getDomProperty('innerText')), //! Marche po, jsp pk
+                    'date'      => strip_tags($this->driver->findElement($messageDateSelector)->getDomProperty('innerText'))
                 ];
             }
 
             return $messagesArray;
-        } catch (Exception $e)
-        {
+        } catch (Exception $e) {
             throw $e;
         }
     }

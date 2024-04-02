@@ -34,7 +34,6 @@ class GetMessages extends Command
         $this->comment("Username is : {$username}");
 
         $marketShare = MarketShare::find(1);
-        dump($marketShare);
 
         $data = $boursoramaScraper->extractForumMessagesFromPage($marketShare);
 
