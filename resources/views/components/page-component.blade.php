@@ -27,10 +27,11 @@
       <h3> {{ $title }} </h3>
     </header>
     <main>
-      <section>
+      <section style="margin: 0px; padding: 0px;">
 
-        <iframe height="480px"
-                width="720px"
+        <iframe
+                height="100%"
+                width="100%"
                 src="{{ env('APP_URL') . ':7900?password=' . env('SAIL_VNC_PASSWORD') . '&autoconnect=1&resize=scale' }}"></iframe>
       </section>
       <section>
