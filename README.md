@@ -36,12 +36,12 @@ ATTENTION : ne pas oublier de mettre à jour les variables du .env (l'utilisateu
 `cd laravel-application && ./vendor/bin/sail down`
 ### Commande d'exécution principale du programme
 `cd laravel-application && ./vendor/bin/sail boursorama:aggregate`
-- `-h` : Obtenir l'aide à l'exécution
+- `-h` : Obtenir l'aide à l'exécution.
 - `--url=<url>` : Ne **FONCTIONNE PAS** avec les **OPTIONS** : `--fresh` et `--ms`. Génère le jeu de donnée pour ces urls d'actions particulières.
 - `--fresh` : Récupérer l'ensemble des actions de la page d'accueil des actions éligibles au SRD.
-- `-vvv` : Exécuter en mode **très verbeux**
-- `--ms=<Nom de l'action>` : Récupérer les valeurs d'une ou plusieurs action(s) particulière(s) (nécessite au moins un jeu de données dans le base)
-- `-n` : Exécution en mode **non-interactif** (aucune demande à l'utilisateur)
+- `-vvv` : Exécuter en mode **très verbeux**.
+- `--ms=<Nom de l'action>` : Récupérer les valeurs d'une ou plusieurs action(s) particulière(s) (nécessite au moins un jeu de données dans le base).
+- `-n` : Exécution en mode **non-interactif** (aucune demande à l'utilisateur).
 ## Chemins des fichiers de téléchargement
 Toutes les données téléchargées par l'application sont stockées dans :
 `laravel-application/storage/app/public`
