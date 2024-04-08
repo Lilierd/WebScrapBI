@@ -18,8 +18,9 @@ return new class extends Migration
             $table->string('title')
                 ->nullable();
             $table->string('author');
-            $table->string('content', 4096);
             $table->string('boursorama_date');
+
+            $table->longText('content');
 
             $table->unsignedBigInteger('forum_message_id') //parent_id
                 ->nullable()

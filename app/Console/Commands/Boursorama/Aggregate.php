@@ -40,7 +40,8 @@ class Aggregate extends Command
      */
     protected $description =    "Register to database all data needed
                                 {--fresh : tells if navigation should be used rather than database, if no primous scraping was done}
-                                {--ms : When using in pair with `--no-interaction`, override choices by giving MarketShares name. (Only on snapshoting state as we couldn't prédire le market share de l'url de navigation sans le traverser)}";
+                                {--ms : When using in pair with `--no-interaction`, override choices by giving MarketShares name. (Only on snapshoting state as we couldn't prédire le market share de l'url de navigation sans le traverser)}
+                                {--url : Aggregate from one or multiple specified URLs.}";
 
 
     protected Timer $timer;
@@ -76,25 +77,25 @@ class Aggregate extends Command
         $username = $boursoramaScraper->login();
         $this->comment("Username is : {$username}");
 
-        if (!$this->option('url')) {
-            // * Si option fresh n'est pas présente, on agrège depuis la base de donnée.
-            $arbitraryCount =  MarketShare::count();
-            if (!$this->option("fresh") && $arbitraryCount) {
-                $this->useDataBase(boursoramaScraper: $boursoramaScraper, snapshotIndex: $snapshotIndex);
-            } else {
-                if (!$arbitraryCount) {
-                    $this->warn("No market shares found on Database while not using '--fresh' option.");
-                    if (!$this->confirm("Do you want to use Boursorama's navigation's strategy instead ?", true)) {
-                        $this->warn("Exited without any operations. Database doesn't contain any Market Shares.");
-                        $snapshotIndex->delete();
-                        return;
-                    }
-                }
-                // * Si option fresh : on aggrège en parcourant la navigation
-                $this->useNavigation(boursoramaScraper: $boursoramaScraper, snapshotIndex: $snapshotIndex);
-            }
-        } else {
+        if ($this->option('url')) {
             $this->useUrlsOption($boursoramaScraper, $snapshotIndex);
+        }
+
+        // * Si option fresh n'est pas présente, on agrège depuis la base de donnée.
+        $arbitraryCount =  MarketShare::count();
+        if (!$this->option("fresh") && $arbitraryCount) {
+            $this->useDataBase(boursoramaScraper: $boursoramaScraper, snapshotIndex: $snapshotIndex);
+        } else {
+            if (!$arbitraryCount) {
+                $this->warn("No market shares found on Database while not using '--fresh' option.");
+                if (!$this->confirm("Do you want to use Boursorama's navigation's strategy instead ?", true)) {
+                    $this->warn("Exited without any operations. Database doesn't contain any Market Shares.");
+                    $snapshotIndex->delete();
+                    return;
+                }
+            }
+            // * Si option fresh : on aggrège en parcourant la navigation
+            $this->useNavigation(boursoramaScraper: $boursoramaScraper, snapshotIndex: $snapshotIndex);
         }
 
 
@@ -183,6 +184,7 @@ class Aggregate extends Command
                     'snapshot_index_id' => $snapshotIndex->getKey(),
                     'market_share_id'   => $marketShare->getKey()
                 ]);
+                $boursoramaScraper->extractForumMessagesFromPage($marketShare);
             });
         } else {
             foreach ($resolved as $marketShare) {
@@ -192,6 +194,7 @@ class Aggregate extends Command
                     'snapshot_index_id' => $snapshotIndex->getKey(),
                     'market_share_id'   => $marketShare->getKey()
                 ]);
+                $boursoramaScraper->extractForumMessagesFromPage($marketShare);
             }
         }
     }
@@ -271,6 +274,9 @@ class Aggregate extends Command
         $this->info("Visiting all market shares URLs...");
         // $marketSharesData = [];
         // $_temp = array_slice($marketSharesUrls, 0, 2);
+
+
+        // * Pour chaque URL on créer une nouvelle snapshot de l'action associée
         $this->withProgressBar($marketSharesUrls, function ($marketShareURL) use ($boursoramaScraper, $snapshotIndex) {
             $this->output->write(" Parsing : {$marketShareURL}");
             $marketShareData = $boursoramaScraper->extractMarketShareDataFromUrl($marketShareURL);
@@ -304,6 +310,8 @@ class Aggregate extends Command
                 'snapshot_index_id' => $snapshotIndex->id,
                 'market_share_id'   => $marketShare->id
             ]);
+            // * Aggrégation des messages
+            $boursoramaScraper->extractForumMessagesFromPage($marketShare);
         });
         $this->newLine();
         $this->comment("While traversing, saved found Market Shares data under SnapshotIndex: {$snapshotIndex->id}.");
@@ -366,7 +374,11 @@ class Aggregate extends Command
 
     public function checkParametersAndOptions(): void
     {
-        $this->line("Options are :");
+        if ($this->output->isVeryVerbose()) {
+            $this->line("Options are :");
+            // $this->line(Arr::join(Arr::join($this->options(), ','), ",", "."));
+            dump($this->options());
+        }
         $this->validateParameters();
     }
 

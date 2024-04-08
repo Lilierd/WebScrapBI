@@ -334,12 +334,12 @@ SCRIPT;
                 ],
                 length: count($headers),
             );
-            dump($fileArray);
+
             return $fileArray;
         }
     }
 
-    public function extractForumMessagesUrlFromPage(MarketShare $marketShare)
+    protected function extractForumMessagesUrlFromPage(MarketShare $marketShare)
     {
         try {
             if ($this->driver->getCurrentURL() !== $marketShare->url)
@@ -357,8 +357,6 @@ SCRIPT;
             foreach ($this->driver->findElements($allMessagesSelector) as $message) {
                 $urlArray[] = $message->findElement($messageLinkSelector)->getDomProperty("href");
             }
-
-            dump($urlArray);
 
             return $urlArray;
         } catch (Exception $e) {
