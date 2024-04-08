@@ -2,6 +2,7 @@
 
 namespace App\Contracts;
 
+use App\Models\ForumMessage;
 use App\Models\MarketShare;
 use App\Models\SnapshotIndex;
 use Exception;
@@ -354,8 +355,6 @@ SCRIPT;
 
             $urlArray = [];
             foreach ($this->driver->findElements($allMessagesSelector) as $message) {
-                //TODO : récup l'URL de chaque message puis refaire une boucle pour naviguer sur chaque msg
-
                 $urlArray[] = $message->findElement($messageLinkSelector)->getDomProperty("href");
             }
 
@@ -372,30 +371,51 @@ SCRIPT;
         $urlArray = $this->extractForumMessagesUrlFromPage($marketShare);
 
         try {
-            //? Message page
-            $messageTitleSelector = WebDriverBy::cssSelector("h1.c-title");
+            $allMessagesSelector    = WebDriverBy::cssSelector("div.c-message"); //*Plusieurs
+            $messageTitleSelector   = WebDriverBy::cssSelector("h1.c-title");
             $messageContentSelector = WebDriverBy::cssSelector("p.c-message__text.c-message__text--shifted");
             $messageAuthorSelector  = WebDriverBy::cssSelector("button[data-popover-target-class='c-profile-light']");
             $messageDateSelector    = WebDriverBy::cssSelector("span.c-source__time");
 
-            $messagesArray = [];
-            foreach ($urlArray as $url) {
+            foreach ($urlArray as $url) { // * Pour chaques urls de conversations /forum/<action>/detail/<forum_message_id>
                 $this->driver->navigate()->to($url);
 
                 $this->driver->wait(10, 25)
                     ->until(WebDriverExpectedCondition::presenceOfElementLocated($messageAuthorSelector));
 
-                //$this->driver->executeScript("arguments[0].scrollIntoView();", );
+                // * ID de la conversation (et du premier message/parent)
+                $url_split = explode("/", $url);
+                $conv_id = $url_split[count($url_split) - 2];
 
-                $messagesArray[] = [
-                    'title'     => strip_tags($this->driver->findElement($messageTitleSelector)->getDomProperty('innerText')),
-                    'content'   => strip_tags($this->driver->findElement($messageContentSelector)->getDomProperty('innerText')),
-                    'author'    => strip_tags($this->driver->findElement($messageAuthorSelector)->getDomProperty('innerText')), //! Marche po, jsp pk
-                    'date'      => strip_tags($this->driver->findElement($messageDateSelector)->getDomProperty('innerText'))
-                ];
+                // * Titre de la conversation
+                $title = $this->driver->findElement($messageTitleSelector)->getDomProperty('innerText');
+
+                foreach ($this->driver->findElements($allMessagesSelector) as $message) {
+                    if (empty($message->getDomProperty("id"))) {
+                        $m_id = intval($conv_id);   //* Message ID
+                        $p_id = null;       //* Parent ID
+                        $m_title = $title;  //* Titre de la conversation
+                    } else {
+                        $m_id = intval($message->getDomProperty("id")); //* Message ID
+                        $p_id = intval($conv_id);                       //* Parent ID
+                        $m_title = null;                        //* Titre null pour les réponses
+                    }
+
+                    $messageData = [
+                        'id'                => $m_id,
+                        'forum_message_id'  => $p_id,
+                        'market_share_id'   => $marketShare->id,
+                        'title'             => strip_tags($m_title),
+                        'content'           => strip_tags($message->findElement($messageContentSelector)->getDomProperty('innerText')),
+                        'author'            => strip_tags($message->findElements($messageAuthorSelector)[1]->getDomProperty('innerText')),
+                        'boursorama_date'   => strip_tags($message->findElement($messageDateSelector)->getDomProperty('innerText'))
+                    ];
+
+                    ForumMessage::updateOrCreate($messageData);
+                }
             }
 
-            return $messagesArray;
+            return $messageData;
         } catch (Exception $e) {
             throw $e;
         }
