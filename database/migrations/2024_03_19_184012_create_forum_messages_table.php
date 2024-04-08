@@ -12,7 +12,20 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('forum_messages', function (Blueprint $table) {
-            $table->id();
+            $table->unsignedBigInteger('id', false)
+                ->primary();
+
+            $table->string('title')
+                ->nullable();
+            $table->string('author');
+            $table->string('content');
+            $table->string('boursorama_date');
+
+            $table->unsignedBigInteger('forum_message_id') //parent_id
+                ->nullable()
+                ->references('id')
+                ->on('forum_messages');
+
             $table->timestamps();
         });
     }
