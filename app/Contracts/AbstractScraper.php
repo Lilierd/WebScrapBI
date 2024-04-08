@@ -28,7 +28,7 @@ abstract class AbstractScraper
      */
     public function __construct(public ?RemoteWebDriver $driver = null)
     {
-        dump("Creating a RemoteWebDriver");
+        // dump("Creating a RemoteWebDriver");
         $this->driver = $driver ?? RemoteWebDriver::create(
             selenium_server_url: static::getSeleniumHubUrl(),
             desired_capabilities: static::getCapabilities(),
@@ -55,7 +55,7 @@ abstract class AbstractScraper
      */
     public function __destruct()
     {
-        dump("Calling destructor for AbstractScraper");
+        // dump("Calling destructor for AbstractScraper");
         $this->driver->quit();
     }
 
@@ -111,11 +111,12 @@ abstract class AbstractScraper
     protected function seleniumGridDownloadFiles(MarketShare $marketShare): string|null
     {
         //Get files names from selenium grid
-        dump("seleniumGridDownloadFiles waiting");
+        // dump("seleniumGridDownloadFiles waiting");
         sleep(10);
         $files = $this->driver->executeCustomCommand('/session/:sessionId/se/files');
 
-        dump($files);
+
+        // dump($files);
         // For multiple files if needed
         // * Saved file name in Laravel
         $fileName = "$marketShare->code" . DIRECTORY_SEPARATOR . Carbon::parse(now())->format("Y-m-d_H-i");
@@ -141,9 +142,9 @@ abstract class AbstractScraper
             }
             // * Saved temp file
             $file_content_decoded = base64_decode($file_content_encoded);
-            dump(Storage::disk('public')->put(path: $zipFileName, contents: $file_content_decoded));
+            Storage::disk('public')->put(path: $zipFileName, contents: $file_content_decoded);
             // * Dezip
-            // dump(Storage::disk('public')->get(path: $zipFileName));
+            Storage::disk('public')->get(path: $zipFileName);
             $zip = new ZipArchive();
             $zip->open(public_path('storage' . DIRECTORY_SEPARATOR . $zipFileName));
             $textFile = $zip->getFromIndex(0);
@@ -153,5 +154,12 @@ abstract class AbstractScraper
             Storage::disk('public')->delete($zipFileName);
         }
         return Storage::disk('public')->path($txtFileName);
+    }
+
+    protected function switchTo(string $url) : void
+    {
+        if($this->driver->getCurrentURL() !== $url) {
+            $this->driver->navigate()->to($url);
+        }
     }
 }

@@ -52,7 +52,7 @@ class BoursoramaScraper extends AbstractScraper
      */
     public function login()
     {
-        $this->driver->navigate()->to("https://boursorama.com");
+        $this->switchTo("https://boursorama.com");
         // * Initialisation des variables
         //? Compte utilisateur
         $username                           = config('boursorama.username');
@@ -78,7 +78,7 @@ class BoursoramaScraper extends AbstractScraper
         $dataUsernameSelector               = WebDriverBy::cssSelector('span.c-navigation__header-logged-member');
 
         // * Debut du parcours vers la page de connexion
-        $this->driver->get($boursoramaBaseUrl);
+        $this->switchTo($boursoramaBaseUrl);
         $this->driver->wait(10, 25)
             ->until(WebDriverExpectedCondition::presenceOfElementLocated($popupDeMerdeSelector));
         $this->driver->findElement($popupDeMerdeSelector);
@@ -126,7 +126,7 @@ class BoursoramaScraper extends AbstractScraper
     {
         $marketShareData = null;
         try {
-            $this->driver->navigate()->to($url);
+            $this->switchTo($url);
 
             $selectorName = WebDriverBy::cssSelector('a.c-faceplate__company-link');
             $selectorIsin = WebDriverBy::cssSelector('h2.c-faceplate__isin');
@@ -194,7 +194,7 @@ class BoursoramaScraper extends AbstractScraper
 
         // *
         // if ($this->driver->getCurrentURL() !== $URL) {
-        $this->driver->navigate()->to($URL);
+        $this->switchTo($URL);
         // }
 
         $this->driver->wait(10, 25)
@@ -216,7 +216,7 @@ class BoursoramaScraper extends AbstractScraper
     public function extractMarketSharesUrlsFromPage(string $URL = "https://www.boursorama.com/bourse/actions/cotations/"): array|null
     {
         // if ($this->driver->getCurrentURL() !== $URL) {
-        $this->driver->navigate()->to($URL);
+        $this->switchTo($URL);
         // }
         // * Initialization
         $data = [];
@@ -242,9 +242,8 @@ class BoursoramaScraper extends AbstractScraper
     {
         // * Gestion de l'iframe de merde qui bloque le clic de la souris vers le bouton
         try {
-            if ($this->driver->getCurrentURL() !== $URL) {
-                $this->driver->navigate()->to($URL);
-            }
+            $this->switchTo($URL);
+
             $script = <<<SCRIPT
 return document.getElementsByClassName('wall-banner').forEach(e => e.remove());
 SCRIPT;
@@ -303,13 +302,12 @@ SCRIPT;
                 // * Si une popup de merde bloque le clic, on éxecute un script qui doit NORMALEMENT la supprimer (28/03/2024) et on relance l'action de clic
                 // dump("Executing antipopup script", $this->driver->executeScript($script));
 
-                dump("Retrying one last time");
+                // dump("Retrying one last time");
                 return $this->extractMarketShareFileFromPage(marketShare: $marketShare, URL: $URL, force: true);
             }
         } catch (Exception $e) { // * Si y'a un autre problème on throw
             throw $e;
         } finally {
-
             $absoluteFilePath = $this->seleniumGridDownloadFiles($marketShare);
             dump($absoluteFilePath);
             $fileContent = File::get($absoluteFilePath);
@@ -342,8 +340,7 @@ SCRIPT;
     protected function extractForumMessagesUrlFromPage(MarketShare $marketShare)
     {
         try {
-            if ($this->driver->getCurrentURL() !== $marketShare->url)
-                $this->driver->navigate()->to($marketShare->url);
+            $this->switchTo($marketShare->url);
 
             //? MarketShare page
             $allMessagesSelector    = WebDriverBy::className("c-message");
@@ -376,7 +373,7 @@ SCRIPT;
             $messageDateSelector    = WebDriverBy::cssSelector("span.c-source__time");
 
             foreach ($urlArray as $url) { // * Pour chaques urls de conversations /forum/<action>/detail/<forum_message_id>
-                $this->driver->navigate()->to($url);
+                $this->switchTo($url);
 
                 $this->driver->wait(10, 25)
                     ->until(WebDriverExpectedCondition::presenceOfElementLocated($messageAuthorSelector));
@@ -388,28 +385,34 @@ SCRIPT;
                 // * Titre de la conversation
                 $title = $this->driver->findElement($messageTitleSelector)->getDomProperty('innerText');
 
-                foreach ($this->driver->findElements($allMessagesSelector) as $message) {
-                    if (empty($message->getDomProperty("id"))) {
+                $messages = [];
+                foreach ($this->driver->findElements($allMessagesSelector) as $messageElement) {
+                    if (empty($messageElement->getDomProperty("id"))) {
                         $m_id = intval($conv_id);   //* Message ID
                         $p_id = null;       //* Parent ID
                         $m_title = $title;  //* Titre de la conversation
                     } else {
-                        $m_id = intval($message->getDomProperty("id")); //* Message ID
+                        $m_id = intval($messageElement->getDomProperty("id")); //* Message ID
                         $p_id = intval($conv_id);                       //* Parent ID
                         $m_title = null;                        //* Titre null pour les réponses
                     }
 
-                    $messageData = [
-                        'id'                => $m_id,
-                        'forum_message_id'  => $p_id,
-                        'market_share_id'   => $marketShare->id,
+                    /**
+                     * @var ForumMessage
+                     */
+                    $message = ForumMessage::firstOrNew(
+                        [
+                            'id'                => $m_id,
+                            'forum_message_id'  => $p_id,
+                            'market_share_id'   => $marketShare->id,
+                        ],
+                    );
+                    $message->fill([
                         'title'             => strip_tags($m_title),
-                        'content'           => strip_tags($message->findElement($messageContentSelector)->getDomProperty('innerText')),
-                        'author'            => strip_tags($message->findElements($messageAuthorSelector)[1]->getDomProperty('innerText')),
-                        'boursorama_date'   => strip_tags($message->findElement($messageDateSelector)->getDomProperty('innerText'))
-                    ];
-
-                    ForumMessage::updateOrCreate($messageData);
+                        'content'           => strip_tags($messageElement->findElement($messageContentSelector)->getDomProperty('innerText')),
+                        'author'            => strip_tags($messageElement->findElements($messageAuthorSelector)[1]->getDomProperty('innerText')),
+                        'boursorama_date'   => strip_tags($messageElement->findElement($messageDateSelector)->getDomProperty('innerText'))
+                    ]);
                 }
             }
 
