@@ -15,7 +15,7 @@ class GetFile extends Command
      *
      * @var string
      */
-    protected $signature = 'app:get-file';
+    protected $signature = 'boursorama:get-file';
 
     /**
      * The console command description.

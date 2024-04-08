@@ -13,7 +13,7 @@ class GetMessages extends Command
      *
      * @var string
      */
-    protected $signature = 'app:get-messages';
+    protected $signature = 'boursorama:get-messages';
 
     /**
      * The console command description.

@@ -13,7 +13,9 @@ use Illuminate\Console\Command;
 use Illuminate\Contracts\Console\Isolatable;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Storage;
 use SebastianBergmann\Timer\Timer;
+use Illuminate\Support\Facades\File;
 
 class Aggregate extends Command
 {
@@ -185,6 +187,8 @@ class Aggregate extends Command
                     'market_share_id'   => $marketShare->getKey()
                 ]);
                 $boursoramaScraper->extractForumMessagesFromPage($marketShare);
+                // *
+                $this->getCsv($boursoramaScraper, $marketShare);
             });
         } else {
             foreach ($resolved as $marketShare) {
@@ -195,6 +199,8 @@ class Aggregate extends Command
                     'market_share_id'   => $marketShare->getKey()
                 ]);
                 $boursoramaScraper->extractForumMessagesFromPage($marketShare);
+                // *
+                $this->getCsv($boursoramaScraper, $marketShare);
             }
         }
     }
@@ -312,6 +318,8 @@ class Aggregate extends Command
             ]);
             // * Aggrégation des messages
             $boursoramaScraper->extractForumMessagesFromPage($marketShare);
+            // *
+            $this->getCsv($boursoramaScraper, $marketShare);
         });
         $this->newLine();
         $this->comment("While traversing, saved found Market Shares data under SnapshotIndex: {$snapshotIndex->id}.");
@@ -365,25 +373,31 @@ class Aggregate extends Command
         }
     }
 
-    protected function useUrl(BoursoramaScraper $boursoramaScraper, string $url)
+    /**
+     *
+     */
+    protected function useUrl(BoursoramaScraper $boursoramaScraper, string $url) : array|null
     {
         $dataFromUrl = $boursoramaScraper->extractMarketShareDataFromUrl($url);
 
         return $dataFromUrl;
     }
 
+    /**
+     *
+     */
     public function checkParametersAndOptions(): void
     {
         if ($this->output->isVeryVerbose()) {
             $this->line("Options are :");
-            // $this->line(Arr::join(Arr::join($this->options(), ','), ",", "."));
             dump($this->options());
         }
         $this->validateParameters();
     }
 
-
-
+    /**
+     *
+     */
     public function validateParameters(): void
     {
         if (
@@ -392,5 +406,36 @@ class Aggregate extends Command
         ) {
             throw new Exception("Can't use `url` with `ms` or `fresh` options");
         }
+    }
+
+    /**
+     *
+     */
+    protected function asCsv(array $fileArray, MarketShare $marketShare) : string
+    {
+        $fileName = Storage::disk('public')->path($marketShare->code . DIRECTORY_SEPARATOR . 'data.csv');
+        $file = fopen($fileName, 'w');
+        foreach ($fileArray as $arrayLine) {
+            fputcsv(
+                stream: $file,
+                fields: $arrayLine,
+                separator: ';',
+                enclosure: '"',
+                escape: '\\',
+                eol: PHP_EOL
+            );
+        }
+        fclose($file);
+        return $fileName;
+    }
+
+    /**
+     *
+     */
+    public function getCsv(BoursoramaScraper $boursoramaScraper, MarketShare $marketShare) {
+        $fileArray = $boursoramaScraper->extractMarketShareFileFromPage($marketShare);
+        // dump($fileArray);
+        $csvFile = $this->asCsv($fileArray, $marketShare);
+        // dump(File::get($csvFile));
     }
 }
