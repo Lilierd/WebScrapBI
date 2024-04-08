@@ -39,7 +39,8 @@ ATTENTION : ne pas oublier de mettre à jour les variables du .env (l'utilisateu
 - `-h` : Obtenir l'aide à l'exécution
 - `--fresh` : Récupérer l'ensemble des actions de la page d'accueil
 - `-vvv` : Exécuter en mode **très verbeux**
-- `--ms=<Nom de l'action>` : Récupérer les valeurs d'une action particulière
+- `--ms=<Nom de l'action>` : Récupérer les valeurs d'une action particulière (nécessite au moins un jeu de données dans le base)
+- `-n` : Exécution en mode **non-interactif** (aucune demande à l'utilisateur)
 ## Chemins des fichiers de téléchargement
 Toutes les données téléchargées par l'application sont stockées dans :
 `laravel-application/storage/app/public`
