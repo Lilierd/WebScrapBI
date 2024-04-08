@@ -13,7 +13,10 @@ use Illuminate\Console\Command;
 use Illuminate\Contracts\Console\Isolatable;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Support\Arr;
+<<<<<<< HEAD
 use Illuminate\Support\Facades\Storage;
+=======
+>>>>>>> 75c7838 (add support for urls options)
 use SebastianBergmann\Timer\Timer;
 use Illuminate\Support\Facades\File;
 
@@ -33,7 +36,11 @@ class Aggregate extends Command
      *
      * @var string
      */
+<<<<<<< HEAD
     protected $signature = 'boursorama:aggregate {--fresh} {--download} {--messages} {--ms=*} {--url=*}';
+=======
+    protected $signature = 'boursorama:aggregate {--fresh} {--ms=*} {--url=*}';
+>>>>>>> 75c7838 (add support for urls options)
 
     /**
      * The console command description.
@@ -72,6 +79,9 @@ class Aggregate extends Command
         //! Si on a pas les bons paramètres on throw
         $this->checkParametersAndOptions();
 
+        // * CHECKING COMMAND ARGUMENTS AND OPTIONS
+        $this->checkParametersAndOptions();
+
         // * Creating snapshot index
         $this->info("Creating Snapshot Index...");
         $snapshotIndex = SnapshotIndex::create([
@@ -106,11 +116,20 @@ class Aggregate extends Command
         $username = $boursoramaScraper->login();
         $this->comment("Username is : {$username}");
 
+<<<<<<< HEAD
         switch ($mode) {
             case 'URL':
                 $this->useUrlsOption($boursoramaScraper, $snapshotIndex);
                 break;
             case 'DATABASE':
+=======
+        if (!$this->option('url')) {
+            // * Si option fresh n'est pas présente, on agrège depuis la base de donnée.
+            $arbitraryCount =  MarketShare::count();
+            if (!$this->option("fresh") && $arbitraryCount) {
+                $this->useDataBase(boursoramaScraper: $boursoramaScraper, snapshotIndex: $snapshotIndex);
+            } else {
+>>>>>>> 75c7838 (add support for urls options)
                 if (!$arbitraryCount) {
                     $this->warn("No market shares found on Database while not using '--fresh' option.");
                     if (!$this->confirm("Do you want to use Boursorama's navigation's strategy instead ?", true)) {
@@ -118,6 +137,7 @@ class Aggregate extends Command
                         $snapshotIndex->delete();
                         return;
                     }
+<<<<<<< HEAD
                     // * Fallback vers navigation si on ne peut pas associer le nom à nos données en BD, puisqu'on a pas de BD.
                     $this->useNavigation(boursoramaScraper: $boursoramaScraper, snapshotIndex: $snapshotIndex);
                 } else {
@@ -140,6 +160,20 @@ class Aggregate extends Command
                 break;
         }
 
+=======
+                }
+                // * Si option fresh : on aggrège en parcourant la navigation
+                $this->useNavigation(boursoramaScraper: $boursoramaScraper, snapshotIndex: $snapshotIndex);
+            }
+        } else {
+            $this->useUrlsOption($boursoramaScraper, $snapshotIndex);
+        }
+
+
+
+
+        // * Si on est très verbeux on affiche un résultat, sinon on s'en fout.
+>>>>>>> 75c7838 (add support for urls options)
         if ($this->output->isVeryVerbose()) {
             $this->showStats($snapshotIndex);
         }
@@ -415,26 +449,72 @@ class Aggregate extends Command
                     ]
                 );
 
+<<<<<<< HEAD
                 $boursoramaScraper->extractForumMessagesFromPage($msID);
                 if($this->option('download')) {
                     $this->getCsv($boursoramaScraper, $msID);
                 }
+=======
+    // public function processPaginationUrls()
+    // {
+    // }
+
+
+    protected function useUrlsOption(
+        BoursoramaScraper $boursoramaScraper,
+        SnapshotIndex $snapshotIndex
+    ) {
+        $urls = $this->option('url');
+        // dd($urls);
+        foreach ($urls as $url) {
+            try {
+                $dataFromUrl = $this->useUrl($boursoramaScraper, $url);
+                $msID = MarketShare::updateOrCreate(
+                    [
+                        ...Arr::only($dataFromUrl, [
+                            'name',
+                            'isin',
+                            'url'
+                        ])
+                    ]
+                );
+                $mssID = MarketShareSnapshot::updateOrCreate(
+                    [
+                        ...Arr::only($dataFromUrl, [
+                            'volume',
+                            'last_value',
+                            'open_value',
+                            'close_value',
+                            'high_value',
+                            'low_value',
+                            'snapshot_index_id',
+                        ]),
+                        'market_share_id'   => $msID->getKey(),
+                        'snapshot_index_id' => $snapshotIndex->getKey()
+                    ]
+                );
+>>>>>>> 75c7838 (add support for urls options)
             } catch (Exception $e) {
                 $this->error($e);
             }
         }
     }
 
+<<<<<<< HEAD
     /**
      *
      */
     private function parseFromMarketShareUrl(BoursoramaScraper $boursoramaScraper, string $url): array|null
+=======
+    protected function useUrl(BoursoramaScraper $boursoramaScraper, string $url)
+>>>>>>> 75c7838 (add support for urls options)
     {
         $dataFromUrl = $boursoramaScraper->extractMarketShareDataFromUrl($url);
 
         return $dataFromUrl;
     }
 
+<<<<<<< HEAD
     /**
      *
      */
@@ -455,6 +535,16 @@ class Aggregate extends Command
     /**
      *
      */
+=======
+    public function checkParametersAndOptions(): void
+    {
+        $this->line("Options are :");
+        $this->validateParameters();
+    }
+
+
+
+>>>>>>> 75c7838 (add support for urls options)
     public function validateParameters(): void
     {
         if (
@@ -464,6 +554,7 @@ class Aggregate extends Command
             throw new Exception("Can't use `url` with `ms` or `fresh` options");
         }
     }
+<<<<<<< HEAD
 
     /**
      *
@@ -496,4 +587,6 @@ class Aggregate extends Command
         $csvFile = $this->asCsv($fileArray, $marketShare);
         // dump(File::get($csvFile));
     }
+=======
+>>>>>>> 75c7838 (add support for urls options)
 }
