@@ -349,8 +349,8 @@ SCRIPT;
             $allMessagesSelector    = WebDriverBy::className("c-message");
             $messageLinkSelector   = WebDriverBy::cssSelector("a.c-link.c-link--regular.c-link--neutral.c-link--bold.c-link--no-underline");
 
-            $this->driver->wait(10, 25)
-                ->until(WebDriverExpectedCondition::presenceOfElementLocated($allMessagesSelector));
+            // $this->driver->wait(10, 25)
+            //     ->until(WebDriverExpectedCondition::presenceOfElementLocated($allMessagesSelector));
             // $allMessages = $this->driver->findElement($allMessagesSelector)->getDomProperty("innerText");
 
             $urlArray = [];
@@ -413,7 +413,7 @@ SCRIPT;
                 }
             }
 
-            return $messageData;
+            // return $messageData;
         } catch (Exception $e) {
             throw $e;
         }
