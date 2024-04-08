@@ -18,13 +18,18 @@ return new class extends Migration
             $table->string('title')
                 ->nullable();
             $table->string('author');
-            $table->string('content');
+            $table->string('content', 2024);
             $table->string('boursorama_date');
 
             $table->unsignedBigInteger('forum_message_id') //parent_id
                 ->nullable()
                 ->references('id')
                 ->on('forum_messages');
+
+            $table->unsignedBigInteger('market_share_id') //market_share_id
+                ->nullable()
+                ->references('id')
+                ->on('market_shares');
 
             $table->timestamps();
         });
