@@ -2,6 +2,7 @@
 
 namespace App\Contracts;
 
+use App\Models\ForumMessage;
 use App\Models\MarketShare;
 use App\Models\SnapshotIndex;
 use Exception;
@@ -304,7 +305,6 @@ SCRIPT;
 
                 dump("Retrying one last time");
                 return $this->extractMarketShareFileFromPage(marketShare: $marketShare, URL: $URL, force: true);
-
             }
         } catch (Exception $e) { // * Si y'a un autre problème on throw
             throw $e;
@@ -339,31 +339,85 @@ SCRIPT;
         }
     }
 
-    public function extractForumMessagesFromPage(MarketShare $marketShare)
+    public function extractForumMessagesUrlFromPage(MarketShare $marketShare)
     {
-        try
-        {
-            if ($this->driver->getCurrentURL() !== $marketShare->url) {
+        try {
+            if ($this->driver->getCurrentURL() !== $marketShare->url)
                 $this->driver->navigate()->to($marketShare->url);
-            }
 
+            //? MarketShare page
             $allMessagesSelector    = WebDriverBy::className("c-message");
-            $messageTitleSelector   = WebDriverBy::cssSelector("a.c-link.c-link--regular.c-link--neutral.c-link--bold.c-link--no-underline");
-            $messageContentSelector = WebDriverBy::cssSelector("p.c-message__text.o-ellipsis-multiline-2");
-            $messageAuthorSelector  = WebDriverBy::cssSelector("button.c-link.c-link--animated.c-link--xx-small.c-source__username.c-source__username--xx-small");
-            $messageDateSelector    = WebDriverBy::cssSelector("span.c-source__time"); //! Y en a plusieurs (date et heure non combinés)
+            $messageLinkSelector   = WebDriverBy::cssSelector("a.c-link.c-link--regular.c-link--neutral.c-link--bold.c-link--no-underline");
 
             $this->driver->wait(10, 25)
                 ->until(WebDriverExpectedCondition::presenceOfElementLocated($allMessagesSelector));
-            $allMessages = $this->driver->findElement($allMessagesSelector)->getDomProperty("innerText");
+            // $allMessages = $this->driver->findElement($allMessagesSelector)->getDomProperty("innerText");
 
-            return $allMessages;
+            $urlArray = [];
+            foreach ($this->driver->findElements($allMessagesSelector) as $message) {
+                $urlArray[] = $message->findElement($messageLinkSelector)->getDomProperty("href");
+            }
 
-            //TODO: la fo fer le code de recup
-            // ! Faut naviguer sur chaque message et cliquer dessus pour avoir le contenu
-        } catch (Exception $e)
-        {
-            dump($e);
+            dump($urlArray);
+
+            return $urlArray;
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
+
+    public function extractForumMessagesFromPage(MarketShare $marketShare)
+    {
+        $urlArray = $this->extractForumMessagesUrlFromPage($marketShare);
+
+        try {
+            $allMessagesSelector    = WebDriverBy::cssSelector("div.c-message"); //*Plusieurs
+            $messageTitleSelector   = WebDriverBy::cssSelector("h1.c-title");
+            $messageContentSelector = WebDriverBy::cssSelector("p.c-message__text.c-message__text--shifted");
+            $messageAuthorSelector  = WebDriverBy::cssSelector("button[data-popover-target-class='c-profile-light']");
+            $messageDateSelector    = WebDriverBy::cssSelector("span.c-source__time");
+
+            foreach ($urlArray as $url) { // * Pour chaques urls de conversations /forum/<action>/detail/<forum_message_id>
+                $this->driver->navigate()->to($url);
+
+                $this->driver->wait(10, 25)
+                    ->until(WebDriverExpectedCondition::presenceOfElementLocated($messageAuthorSelector));
+
+                // * ID de la conversation (et du premier message/parent)
+                $url_split = explode("/", $url);
+                $conv_id = $url_split[count($url_split) - 2];
+
+                // * Titre de la conversation
+                $title = $this->driver->findElement($messageTitleSelector)->getDomProperty('innerText');
+
+                foreach ($this->driver->findElements($allMessagesSelector) as $message) {
+                    if (empty($message->getDomProperty("id"))) {
+                        $m_id = intval($conv_id);   //* Message ID
+                        $p_id = null;       //* Parent ID
+                        $m_title = $title;  //* Titre de la conversation
+                    } else {
+                        $m_id = intval($message->getDomProperty("id")); //* Message ID
+                        $p_id = intval($conv_id);                       //* Parent ID
+                        $m_title = null;                        //* Titre null pour les réponses
+                    }
+
+                    $messageData = [
+                        'id'                => $m_id,
+                        'forum_message_id'  => $p_id,
+                        'market_share_id'   => $marketShare->id,
+                        'title'             => strip_tags($m_title),
+                        'content'           => strip_tags($message->findElement($messageContentSelector)->getDomProperty('innerText')),
+                        'author'            => strip_tags($message->findElements($messageAuthorSelector)[1]->getDomProperty('innerText')),
+                        'boursorama_date'   => strip_tags($message->findElement($messageDateSelector)->getDomProperty('innerText'))
+                    ];
+
+                    ForumMessage::updateOrCreate($messageData);
+                }
+            }
+
+            return $messageData;
+        } catch (Exception $e) {
+            throw $e;
         }
     }
 }
