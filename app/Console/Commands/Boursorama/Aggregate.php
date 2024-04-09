@@ -73,12 +73,6 @@ class Aggregate extends Command
         //! Si on a pas les bons paramètres on throw
         $this->checkParametersAndOptions();
 
-        // * CHECKING COMMAND ARGUMENTS AND OPTIONS
-        $this->checkParametersAndOptions();
-
-        // * CHECKING COMMAND ARGUMENTS AND OPTIONS
-        $this->checkParametersAndOptions();
-
         // * Creating snapshot index
         $this->info("Creating Snapshot Index...");
         $snapshotIndex = SnapshotIndex::create([
@@ -483,45 +477,6 @@ class Aggregate extends Command
         }
     }
 
-    protected function useUrlsOption(
-        BoursoramaScraper $boursoramaScraper,
-        SnapshotIndex $snapshotIndex
-    ) {
-        $urls = $this->option('url');
-        // dd($urls);
-        foreach ($urls as $url) {
-            try {
-                $dataFromUrl = $this->useUrl($boursoramaScraper, $url);
-                $msID = MarketShare::updateOrCreate(
-                    [
-                        ...Arr::only($dataFromUrl, [
-                            'name',
-                            'isin',
-                            'url'
-                        ])
-                    ]
-                );
-                $mssID = MarketShareSnapshot::updateOrCreate(
-                    [
-                        ...Arr::only($dataFromUrl, [
-                            'volume',
-                            'last_value',
-                            'open_value',
-                            'close_value',
-                            'high_value',
-                            'low_value',
-                            'snapshot_index_id',
-                        ]),
-                        'market_share_id'   => $msID->getKey(),
-                        'snapshot_index_id' => $snapshotIndex->getKey()
-                    ]
-                );
-            } catch (Exception $e) {
-                $this->error($e);
-            }
-        }
-    }
-
     /**
      *
      */
@@ -530,31 +485,6 @@ class Aggregate extends Command
         $dataFromUrl = $boursoramaScraper->extractMarketShareDataFromUrl($url);
 
         return $dataFromUrl;
-    }
-
-    /**
-     *
-     */
-    public function checkParametersAndOptions(): void
-    {
-        if ($this->output->isVeryVerbose()) {
-            $this->line("Options are :");
-            dump($this->options());
-        }
-        $this->validateParameters();
-    }
-
-    /**
-     *
-     */
-    public function validateParameters(): void
-    {
-        if (
-            !empty($this->option('url'))
-            && (!empty($this->option('ms')) || $this->option('fresh'))
-        ) {
-            throw new Exception("Can't use `url` with `ms` or `fresh` options");
-        }
     }
 
     /**
