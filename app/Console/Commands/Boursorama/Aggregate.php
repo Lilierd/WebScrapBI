@@ -403,6 +403,9 @@ class Aggregate extends Command
                         'snapshot_index_id' => $snapshotIndex->getKey()
                     ]
                 );
+
+                $boursoramaScraper->extractForumMessagesFromPage($msID);
+                $boursoramaScraper->extractMarketShareFileFromPage(marketShare: $msID);
             } catch (Exception $e) {
                 $this->error($e);
             }
