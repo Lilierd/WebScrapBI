@@ -6,4 +6,4 @@ SELECT (
     MAX(updated_at) AS Maxime
 FROM forum_messages AS FM_1
 GROUP BY MSIsin
-ORDER BY Maxime;
+ORDER BY Maxime DESC;

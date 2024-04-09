@@ -400,25 +400,34 @@ SCRIPT;
                     // /**
                     //  * @var ForumMessage
                     //  */
-                    $identifiers = [
-                        'id'                => $m_id,
-                        'forum_message_id'  => $p_id,
-                        'market_share_id'   => $marketShare->id,
-                    ];
-                    $message = ForumMessage::firstOrNew(
-                        $identifiers
-                    );
-                    // dd($message);
-                    $message->updateOrCreate(
-                        [
-                            ...$identifiers,
-                            'title'             => strip_tags($m_title),
-                            'content'           => strip_tags($messageElement->findElement($messageContentSelector)->getDomProperty('innerText')),
-                            'author'            => strip_tags($messageElement->findElements($messageAuthorSelector)[1]->getDomProperty('innerText')),
-                            'boursorama_date'   => strip_tags($messageElement->findElement($messageDateSelector)->getDomProperty('innerText'))
-                        ]
-                    );
+                    try {
+                        $identifiers = [
+                            'id'                => $m_id,
+                            'forum_message_id'  => $p_id,
+                            'market_share_id'   => $marketShare->id,
+                        ];
+                        $message = ForumMessage::firstOrNew(
+                            $identifiers
+                        );
 
+                        $temp = $messageElement->findElements($messageAuthorSelector);
+
+                        $author =  $temp
+                            ? strip_tags($temp[1]->getDomProperty('innerText'))
+                            : 'Profil supprimé';
+
+                        $message->updateOrCreate(
+                            [
+                                ...$identifiers,
+                                'title'             => strip_tags($m_title),
+                                'content'           => strip_tags($messageElement->findElement($messageContentSelector)->getDomProperty('innerText')),
+                                'author'            => $author,
+                                'boursorama_date'   => strip_tags($messageElement->findElement($messageDateSelector)->getDomProperty('innerText'))
+                            ]
+                        );
+                    } catch (Exception $e) {
+                        dump("Une erreur est survenue sur un message du forum de l'action '{$marketShare->name}'.");
+                    }
                 }
             }
 
