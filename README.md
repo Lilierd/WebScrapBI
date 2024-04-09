@@ -42,7 +42,8 @@ ATTENTION : ne pas oublier de mettre à jour les variables du .env (l'utilisateu
 - `-vvv` : Exécuter en mode **très verbeux**.
 - `--ms=<Nom de l'action>` : Récupérer les valeurs d'une ou plusieurs action(s) particulière(s) (nécessite au moins un jeu de données dans le base).
 - `-n` : Exécution en mode **non-interactif** (aucune demande à l'utilisateur).
-- `--download` : Exécution avec récupération des messages du forum de(s) l'action(s).
+- `--download` : Exécution avec récupération d'un fichier par action qui répertorie les opération des dernières 24h.
+- `--messages` : Exécution avec récupération des messages du forum de(s) l'action(s)
 ### Commande annexe
 Récupération du fichier des dernières 24h d'une action :
 `cd laravel-application && ./vendor/bin/sail boursorama:get-file --ms=<Nom de l'action>`
