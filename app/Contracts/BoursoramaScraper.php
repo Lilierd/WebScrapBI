@@ -365,6 +365,7 @@ SCRIPT;
     {
         $urlArray = $this->extractForumMessagesUrlFromPage($marketShare);
 
+
         try {
             $allMessagesSelector    = WebDriverBy::cssSelector("div.c-message"); //*Plusieurs
             $messageTitleSelector   = WebDriverBy::cssSelector("h1.c-title");
@@ -385,7 +386,6 @@ SCRIPT;
                 // * Titre de la conversation
                 $title = $this->driver->findElement($messageTitleSelector)->getDomProperty('innerText');
 
-                $messages = [];
                 foreach ($this->driver->findElements($allMessagesSelector) as $messageElement) {
                     if (empty($messageElement->getDomProperty("id"))) {
                         $m_id = intval($conv_id);   //* Message ID
@@ -397,22 +397,26 @@ SCRIPT;
                         $m_title = null;                        //* Titre null pour les réponses
                     }
 
-                    /**
-                     * @var ForumMessage
-                     */
+                    // /**
+                    //  * @var ForumMessage
+                    //  */
+                    $identifiers = [
+                        'id'                => $m_id,
+                        'forum_message_id'  => $p_id,
+                        'market_share_id'   => $marketShare->id,
+                    ];
                     $message = ForumMessage::firstOrNew(
+                        $identifiers
+                    )->updateOrCreate(
                         [
-                            'id'                => $m_id,
-                            'forum_message_id'  => $p_id,
-                            'market_share_id'   => $marketShare->id,
-                        ],
+                            ...$identifiers,
+                            'title'             => strip_tags($m_title),
+                            'content'           => strip_tags($messageElement->findElement($messageContentSelector)->getDomProperty('innerText')),
+                            'author'            => strip_tags($messageElement->findElements($messageAuthorSelector)[1]->getDomProperty('innerText')),
+                            'boursorama_date'   => strip_tags($messageElement->findElement($messageDateSelector)->getDomProperty('innerText'))
+                        ]
                     );
-                    $message->fill([
-                        'title'             => strip_tags($m_title),
-                        'content'           => strip_tags($messageElement->findElement($messageContentSelector)->getDomProperty('innerText')),
-                        'author'            => strip_tags($messageElement->findElements($messageAuthorSelector)[1]->getDomProperty('innerText')),
-                        'boursorama_date'   => strip_tags($messageElement->findElement($messageDateSelector)->getDomProperty('innerText'))
-                    ]);
+                    dump($message);
                 }
             }
 
