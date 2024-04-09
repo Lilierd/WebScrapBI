@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\SnapshotIndex;
 use App\View\Components\ListComponent;
 use App\View\Components\PageComponent;
+use App\View\Components\TableComponent\Index;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Response;
 
@@ -20,7 +22,7 @@ class SnapshotIndexController extends Controller
             ->map(function (SnapshotIndex $snapshotIndex) {
                 return [
                     'href'          => route('browse.market-snapshot.by-snapshot', ['snapshotIndex' => $snapshotIndex]),
-                    'display_name'  => "{$snapshotIndex->snapshot_time->format('Y-m-d H:i')} [x{$snapshotIndex->marketShare->count()} données collectées]",
+                    'display_name'  => "{$snapshotIndex->snapshot_time->format('Y-m-d H:i')} [x{$snapshotIndex->snapshots->count()} données collectées]",
                 ];
             });
 
@@ -55,7 +57,36 @@ class SnapshotIndexController extends Controller
      */
     public function show(SnapshotIndex $snapshotIndex)
     {
-        //
+        // dd($snapshotIndex);
+        $tableHeaders = [
+            'id',
+            // 'marketShare.volume',
+            // 'marketShare.last_value',
+            // 'marketShare.open_value',
+            // 'marketShare.close_value',
+            // 'marketShare.high_value',
+            // 'marketShare.low_value'
+        ];
+        // $snapshotIndex = $snapshotIndex->toArray();
+
+        // dd($tableRows);
+        // die;
+
+        $data = $snapshotIndex->snapshots()->limit(10)->with('marketShare')->get()->toArray();
+        // $headers = array_keys($data[0]);
+
+        dd($data);
+
+        return Response::make(
+            Blade::renderComponent(
+                new PageComponent(
+                    childComponent: Blade::renderComponent(new Index(
+                        headers: array_keys($snapshotIndex->marketShares->toArray()[0]),
+                        rows: $snapshotIndex->marketShares->toArray()
+                    ))
+                )
+            )
+        );
     }
 
     /**

@@ -14,27 +14,35 @@
     @vite(['resources/css/app.css'])
   </head>
 
-  <body>
+  <body hx-get="{{Illuminate\Support\Facades\URL::current()}}"
+        hx-boost="true"
+        hx-target="main > section:nth-child(2)"
+        hx-select="main > section:nth-child(2)"
+        hx-swap="outerHTML"
+        hx-push-url="true"
+        {{-- hx-trigger="every 5s" --}}
+        hx-indicator="main > section:nth-child(2)"
+        {{-- hx-disabled-elt="this" --}}
+        >
     <header>
       <h1>
-        <a hx-get={{ route('root') }}
-           hx-boost="true"
-           hx-push-url="true"
-           hx-target="body">
+        <a href={{ route('root') }}>
           Accueil
         </a>
       </h1>
-      <h3> {{ $title }} </h3>
     </header>
     <main>
-      <section>
+      <section style="margin: 0px; padding: 0px;">
 
-        <iframe height="480px"
-                width="720px"
+        <iframe height="100%"
+                width="100%"
                 src="{{ env('APP_URL') . ':7900?password=' . env('SAIL_VNC_PASSWORD') . '&autoconnect=1&resize=scale' }}"></iframe>
       </section>
       <section>
-        {!! $childComponent !!}
+        <h3> {{ $title }} </h3>
+        <div>
+            {!! $childComponent !!}
+        </div>
       </section>
     </main>
 

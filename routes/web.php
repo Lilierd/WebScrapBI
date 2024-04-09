@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [SnapshotIndexController::class, 'index'])
     ->name('root');
+Route::get('/snapshot-index/{snapshotIndex}', [SnapshotIndexController::class, 'show']);
 
 // Route::get('aggregate/{name?}', function (?string $name) {
 //     if(Artisan::call("boursorama:aggregate -n --ms={$name} --isolated=-1") === -1) {

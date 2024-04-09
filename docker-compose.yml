@@ -34,7 +34,7 @@ services:
             MYSQL_DATABASE: '${DB_DATABASE}'
             MYSQL_USER: '${DB_USERNAME}'
             MYSQL_PASSWORD: '${DB_PASSWORD}'
-
+            MYSQL_TIMEZONE: '${APP_TIMEZONE}'
             MYSQL_ALLOW_EMPTY_PASSWORD: 0
         volumes:
             - 'sail-mysql:/var/lib/mysql'
