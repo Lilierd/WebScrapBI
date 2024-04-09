@@ -20,12 +20,11 @@
         hx-select="main > section:nth-child(2)"
         hx-swap="outerHTML"
         hx-push-url="true"
-        hx-trigger="every 5s"
+        {{-- hx-trigger="every 5s" --}}
         hx-indicator="main > section:nth-child(2)"
-        hx-disabled-elt="this"
+        {{-- hx-disabled-elt="this" --}}
         >
     <header>
-        {{Illuminate\Support\Facades\URL::current()}}
       <h1>
         <a href={{ route('root') }}>
           Accueil

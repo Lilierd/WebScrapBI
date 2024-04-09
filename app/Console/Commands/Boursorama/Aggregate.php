@@ -25,7 +25,7 @@ class Aggregate extends Command
      */
     public function isolationLockExpiresAt(): DateTimeInterface|DateInterval
     {
-        return now()->addMinutes(10);
+        return now()->addMinutes(120);
     }
 
     /**
@@ -237,7 +237,7 @@ class Aggregate extends Command
                     'market_share_id'   => $marketShare->getKey()
                 ]);
                 // *
-                if($this->option('download')) {
+                if ($this->option('download')) {
                     $this->getCsv($boursoramaScraper, $marketShare);
                 }
                 if ($this->option('messages')) {
@@ -253,11 +253,12 @@ class Aggregate extends Command
                     'market_share_id'   => $marketShare->getKey()
                 ]);
                 $boursoramaScraper->extractForumMessagesFromPage($marketShare);
-                if($this->option('download')) {
+                if ($this->option('messages')) {
+                    $boursoramaScraper->extractForumMessagesFromPage($marketShare);
+                }
+                if ($this->option('download')) {
                     $this->getCsv($boursoramaScraper, $marketShare);
                 }
-                else if ($this->option('messages'))
-                    $boursoramaScraper->extractForumMessagesFromPage($marketShare);
             }
         }
     }
@@ -370,9 +371,11 @@ class Aggregate extends Command
                 'market_share_id'   => $marketShare->id
             ]);
             // * Aggrégation des messages
-            $boursoramaScraper->extractForumMessagesFromPage($marketShare);
+            if ($this->option('messages')) {
+                $boursoramaScraper->extractForumMessagesFromPage($marketShare);
+            }
             // *
-            if($this->option('download')) {
+            if ($this->option('download')) {
                 $this->getCsv($boursoramaScraper, $marketShare);
             }
         });
@@ -418,8 +421,10 @@ class Aggregate extends Command
                     ]
                 );
 
-                $boursoramaScraper->extractForumMessagesFromPage($msID);
-                if($this->option('download')) {
+                if ($this->option('messages')) {
+                    $boursoramaScraper->extractForumMessagesFromPage($msID);
+                }
+                if ($this->option('download')) {
                     $this->getCsv($boursoramaScraper, $msID);
                 }
             } catch (Exception $e) {
