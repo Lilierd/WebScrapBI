@@ -39,4 +39,6 @@ class GetMessages extends Command
 
         dump($data);
     }
+
+
 }

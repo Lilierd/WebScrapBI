@@ -389,12 +389,12 @@ SCRIPT;
                 foreach ($this->driver->findElements($allMessagesSelector) as $messageElement) {
                     if (empty($messageElement->getDomProperty("id"))) {
                         $m_id = intval($conv_id);   //* Message ID
-                        $p_id = null;       //* Parent ID
-                        $m_title = $title;  //* Titre de la conversation
+                        $p_id = null;               //* Parent ID
+                        $m_title = $title;          //* Titre de la conversation
                     } else {
-                        $m_id = intval($messageElement->getDomProperty("id")); //* Message ID
-                        $p_id = intval($conv_id);                       //* Parent ID
-                        $m_title = null;                        //* Titre null pour les réponses
+                        $m_id = intval($messageElement->getDomProperty("id"));  //* Message ID
+                        $p_id = intval($conv_id);                               //* Parent ID
+                        $m_title = null;                                        //* Titre null pour les réponses
                     }
 
                     // /**
@@ -407,7 +407,9 @@ SCRIPT;
                     ];
                     $message = ForumMessage::firstOrNew(
                         $identifiers
-                    )->updateOrCreate(
+                    );
+                    // dd($message);
+                    $message->updateOrCreate(
                         [
                             ...$identifiers,
                             'title'             => strip_tags($m_title),
@@ -416,7 +418,7 @@ SCRIPT;
                             'boursorama_date'   => strip_tags($messageElement->findElement($messageDateSelector)->getDomProperty('innerText'))
                         ]
                     );
-                    dump($message);
+
                 }
             }
 
