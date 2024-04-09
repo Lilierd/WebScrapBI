@@ -33,7 +33,7 @@ class Aggregate extends Command
      *
      * @var string
      */
-    protected $signature = 'boursorama:aggregate {--fresh} {--download} {--ms=*} {--url=*}';
+    protected $signature = 'boursorama:aggregate {--fresh} {--download} {--messages} {--ms=*} {--url=*}';
 
     /**
      * The console command description.
@@ -41,10 +41,11 @@ class Aggregate extends Command
      * @var string
      */
     protected $description =    "Register to database all data needed
-                                {--fresh : tells if navigation should be used rather than database, if no primous scraping was done}
+                                {--fresh: tells if navigation should be used rather than database, if no primous scraping was done}
                                 {--download: Download file from previous day. (+10s long) }
-                                {--ms : When using in pair with `--no-interaction`, override choices by giving MarketShares name. (Only on snapshoting state as we couldn't prédire le market share de l'url de navigation sans le traverser)}
-                                {--url : Aggregate from one or multiple specified URLs.}";
+                                {--messages: Scrap actions with their forum messages.}
+                                {--ms: When using in pair with `--no-interaction`, override choices by giving MarketShares name. (Only on snapshoting state as we couldn't prédire le market share de l'url de navigation sans le traverser)}
+                                {--url: Aggregate from one or multiple specified URLs.}";
 
 
     protected Timer $timer;
@@ -232,10 +233,12 @@ class Aggregate extends Command
                     'snapshot_index_id' => $snapshotIndex->getKey(),
                     'market_share_id'   => $marketShare->getKey()
                 ]);
-                $boursoramaScraper->extractForumMessagesFromPage($marketShare);
                 // *
                 if($this->option('download')) {
                     $this->getCsv($boursoramaScraper, $marketShare);
+                }
+                if ($this->option('messages')) {
+                    $boursoramaScraper->extractForumMessagesFromPage($marketShare);
                 }
             });
         } else {
@@ -250,6 +253,8 @@ class Aggregate extends Command
                 if($this->option('download')) {
                     $this->getCsv($boursoramaScraper, $marketShare);
                 }
+                else if ($this->option('messages'))
+                    $boursoramaScraper->extractForumMessagesFromPage($marketShare);
             }
         }
     }
