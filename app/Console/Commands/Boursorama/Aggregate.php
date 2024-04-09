@@ -253,7 +253,7 @@ class Aggregate extends Command
                 if($this->option('download')) {
                     $this->getCsv($boursoramaScraper, $marketShare);
                 }
-                else if ($this->option('messages'))
+                if ($this->option('messages'))
                     $boursoramaScraper->extractForumMessagesFromPage($marketShare);
             }
         }
@@ -372,6 +372,9 @@ class Aggregate extends Command
             if($this->option('download')) {
                 $this->getCsv($boursoramaScraper, $marketShare);
             }
+            if ($this->option('messages')) {
+                $boursoramaScraper->extractForumMessagesFromPage($marketShare);
+            }
         });
         $this->newLine();
         $this->comment("While traversing, saved found Market Shares data under SnapshotIndex: {$snapshotIndex->id}.");
@@ -418,6 +421,9 @@ class Aggregate extends Command
                 $boursoramaScraper->extractForumMessagesFromPage($msID);
                 if($this->option('download')) {
                     $this->getCsv($boursoramaScraper, $msID);
+                }
+                if ($this->option('messages')) {
+                    $boursoramaScraper->extractForumMessagesFromPage($msID);
                 }
             } catch (Exception $e) {
                 $this->error($e);
