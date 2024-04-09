@@ -24,30 +24,6 @@ use League\CommonMark\Util\HtmlElement;
 class BoursoramaScraper extends AbstractScraper
 {
     /**
-     * Constructor
-     * @param ?string $seleniumServerUrl - Commonly https://selenium:4444 inside same docker host
-     */
-    // public function __construct(?string $seleniumServerUrl = null)
-    // {
-    //     $seleniumServerUrl = $seleniumServerUrl ?? config('selenium.server_url');
-
-    //     $desiredCapabilities = config('selenium.driver_capabilities', DesiredCapabilities::chrome());
-    //     $chromeOptions = new ChromeOptions();
-    //     $chromeOptions->addArguments(['--start-maximized']);
-    //     // $chromeOptions->addArguments(['--start-fullscreen']);
-    //     $desiredCapabilities->setCapability(ChromeOptions::CAPABILITY, $chromeOptions);
-
-    //     // $this = RemoteWebDriver::create(
-    //     //     selenium_server_url: $seleniumServerUrl,
-    //     //     desired_capabilities: $desiredCapabilities,
-    //     // );
-    // }
-
-
-
-    /**
-     * Constructeur
-     */   /**
      * Authentifie le driver sur le site de https://boursorama.com/
      */
     public function login()
@@ -354,7 +330,6 @@ SCRIPT;
             foreach ($this->driver->findElements($allMessagesSelector) as $message) {
                 $urlArray[] = $message->findElement($messageLinkSelector)->getDomProperty("href");
             }
-
             return $urlArray;
         } catch (Exception $e) {
             throw $e;
@@ -364,7 +339,6 @@ SCRIPT;
     public function extractForumMessagesFromPage(MarketShare $marketShare)
     {
         $urlArray = $this->extractForumMessagesUrlFromPage($marketShare);
-
 
         try {
             $allMessagesSelector    = WebDriverBy::cssSelector("div.c-message"); //*Plusieurs

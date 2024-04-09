@@ -48,6 +48,7 @@ class Aggregate extends Command
                                 {--url: Aggregate from one or multiple specified URLs.}";
 
 
+
     protected Timer $timer;
 
     // protected BoursoramaScraper $scraper;
@@ -70,6 +71,9 @@ class Aggregate extends Command
 
         // * CHECKING COMMAND ARGUMENTS AND OPTIONS
         //! Si on a pas les bons paramètres on throw
+        $this->checkParametersAndOptions();
+
+        // * CHECKING COMMAND ARGUMENTS AND OPTIONS
         $this->checkParametersAndOptions();
 
         // * CHECKING COMMAND ARGUMENTS AND OPTIONS
@@ -109,6 +113,7 @@ class Aggregate extends Command
         $username = $boursoramaScraper->login();
         $this->comment("Username is : {$username}");
 
+
         switch ($mode) {
             case 'URL':
                 $this->useUrlsOption($boursoramaScraper, $snapshotIndex);
@@ -147,6 +152,7 @@ class Aggregate extends Command
             $this->showStats($snapshotIndex);
         }
     }
+
 
     /**
      * Affiche les statistiques à la fin de la commande
@@ -259,6 +265,7 @@ class Aggregate extends Command
                 if ($this->option('download')) {
                     $this->getCsv($boursoramaScraper, $marketShare);
                 }
+
             }
         }
     }
@@ -336,6 +343,7 @@ class Aggregate extends Command
             return;
         }
         $this->info("Visiting all market shares URLs...");
+
         // * Pour chaque URL on créer une nouvelle snapshot de l'action associée
         $this->withProgressBar($marketSharesUrls, function ($marketShareURL) use ($boursoramaScraper, $snapshotIndex) {
             $this->output->write(" Parsing : {$marketShareURL}");
@@ -371,6 +379,7 @@ class Aggregate extends Command
                 'market_share_id'   => $marketShare->id
             ]);
             // * Aggrégation des messages
+
             if ($this->option('messages')) {
                 $boursoramaScraper->extractForumMessagesFromPage($marketShare);
             }
@@ -378,6 +387,7 @@ class Aggregate extends Command
             if ($this->option('download')) {
                 $this->getCsv($boursoramaScraper, $marketShare);
             }
+
         });
         $this->newLine();
         $this->comment("While traversing, saved found Market Shares data under SnapshotIndex: {$snapshotIndex->id}.");
@@ -473,10 +483,84 @@ class Aggregate extends Command
         }
     }
 
+    protected function useUrlsOption(
+        BoursoramaScraper $boursoramaScraper,
+        SnapshotIndex $snapshotIndex
+    ) {
+        $urls = $this->option('url');
+        // dd($urls);
+        foreach ($urls as $url) {
+            try {
+                $dataFromUrl = $this->useUrl($boursoramaScraper, $url);
+                $msID = MarketShare::updateOrCreate(
+                    [
+                        ...Arr::only($dataFromUrl, [
+                            'name',
+                            'isin',
+                            'url'
+                        ])
+                    ]
+                );
+                $mssID = MarketShareSnapshot::updateOrCreate(
+                    [
+                        ...Arr::only($dataFromUrl, [
+                            'volume',
+                            'last_value',
+                            'open_value',
+                            'close_value',
+                            'high_value',
+                            'low_value',
+                            'snapshot_index_id',
+                        ]),
+                        'market_share_id'   => $msID->getKey(),
+                        'snapshot_index_id' => $snapshotIndex->getKey()
+                    ]
+                );
+            } catch (Exception $e) {
+                $this->error($e);
+            }
+        }
+    }
+
     /**
      *
      */
-    protected function asCsv(array $fileArray, MarketShare $marketShare): string
+    protected function useUrl(BoursoramaScraper $boursoramaScraper, string $url) : array|null
+    {
+        $dataFromUrl = $boursoramaScraper->extractMarketShareDataFromUrl($url);
+
+        return $dataFromUrl;
+    }
+
+    /**
+     *
+     */
+    public function checkParametersAndOptions(): void
+    {
+        if ($this->output->isVeryVerbose()) {
+            $this->line("Options are :");
+            dump($this->options());
+        }
+        $this->validateParameters();
+    }
+
+    /**
+     *
+     */
+    public function validateParameters(): void
+    {
+        if (
+            !empty($this->option('url'))
+            && (!empty($this->option('ms')) || $this->option('fresh'))
+        ) {
+            throw new Exception("Can't use `url` with `ms` or `fresh` options");
+        }
+    }
+
+    /**
+     *
+     */
+    protected function asCsv(array $fileArray, MarketShare $marketShare) : string
     {
         $fileName = Storage::disk('public')->path($marketShare->code . DIRECTORY_SEPARATOR . 'data.csv');
         $file = fopen($fileName, 'w');
