@@ -49,7 +49,7 @@
     </main>
 
     <footer>
-      <p>Bastien Merlette - Baptiste CATOIS </p>
+      <p>Bastien MERLETTE - Baptiste CATOIS </p>
       <p>
         <a href="https://get.moodle.lecnam.net/course/view.php?id=17086"
            target="_blank">USSI0Q - Reims-ING6800A-2022/2025 : Business Intelligence (2023 - 2024 Semestre 1)
