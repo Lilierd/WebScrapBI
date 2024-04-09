@@ -147,6 +147,9 @@ html {
                 flex-direction: column;
                 box-sizing: border-box;
 
+                scrollbar-color:  var(--primary) var(--accent);
+
+
                 &:nth-child(1) {
                     @media screen and (max-width: 720px) {
                         display: none;
