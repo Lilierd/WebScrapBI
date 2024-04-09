@@ -89,7 +89,7 @@ html {
         & footer {
             position: relative;
             display: flex;
-            flex-direction: row;
+            flex-direction: column;
             flex-grow: 0;
 
             background-color: black;
@@ -98,7 +98,20 @@ html {
             justify-content: center;
             box-sizing: border-box;
             margin: 0px;
-            padding: 0px;
+            padding: 1em;
+
+
+            p {
+                padding: 0em;
+                margin: 0em;
+                display: flex;
+                flex-direction: row;
+                flex-grow: 1;
+                justify-content: center;
+                & a {
+                    color: var(--primary)
+                }
+            }
         }
 
         /**
@@ -155,16 +168,36 @@ html {
                 }
 
                 &:nth-child(2) {
+                    padding: 0px;
+                    margin: 0px;
                     background-color: black;
                     color: white;
                     opacity: 1;
 
+                    hr {
+                        margin: 0em;
+                        align-self: stretch;
+                        border: 0.25em solid var(--primary);
+                    }
 
+                    h3 a {
+                        cursor: help;
+                        color: var(--accent);
+                        text-transform: uppercase;
+                        text-decoration: underline;
+
+                        &:hover {
+                            color: var(--primary);
+                        }
+                        &:active {
+                            cursor: pointer;
+                        }
+                    }
                     & ul {
                         list-style: decimal;
 
                         & li {
-                            padding: 0px;
+                            padding: 0.33em 0em;
 
                             &::marker {
                                 color: darkslategray;

@@ -14,16 +14,14 @@
     @vite(['resources/css/app.css'])
   </head>
 
-  <body hx-get="{{Illuminate\Support\Facades\URL::current()}}"
-        hx-boost="true"
+  <body hx-boost="true"
         hx-target="main > section:nth-child(2)"
         hx-select="main > section:nth-child(2)"
         hx-swap="outerHTML"
         hx-push-url="true"
         {{-- hx-trigger="every 5s" --}}
-        hx-indicator="main > section:nth-child(2)"
-        {{-- hx-disabled-elt="this" --}}
-        >
+        {{-- hx-indicator="main > section:nth-child(2)" --}}
+        {{-- hx-disabled-elt="this" --}}>
     <header>
       <h1>
         <a href={{ route('root') }}>
@@ -39,15 +37,24 @@
                 src="{{ env('APP_URL') . ':7900?password=' . env('SAIL_VNC_PASSWORD') . '&autoconnect=1&resize=scale' }}"></iframe>
       </section>
       <section>
-        <h3> {{ $title }} </h3>
+        <h3>
+          <a href="{{ Illuminate\Support\Facades\URL::current() }}"
+             title="Rafraîchir la liste">{{ $title }}</a>
+        </h3>
+        <hr>
         <div>
-            {!! $childComponent !!}
+          {!! $childComponent !!}
         </div>
       </section>
     </main>
 
     <footer>
-      <p>©️ EICNAM 2024</p>
+      <p>Bastien Merlette - Baptiste CATOIS </p>
+      <p>
+        <a href="https://get.moodle.lecnam.net/course/view.php?id=17086"
+           target="_blank">USSI0Q - Reims-ING6800A-2022/2025 : Business Intelligence (2023 - 2024 Semestre 1)
+        </a>
+      </p>
     </footer>
   </body>
 
