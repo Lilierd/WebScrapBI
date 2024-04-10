@@ -25,6 +25,9 @@ docker run --rm \
 
 cp .env.example .env
 
+# Démarrer les services de l'application
+./vendor/bin/sail up -d
+
 # Génère une clef afin d'encrypter certaines données si souhaité (voir doc Laravel) 
 ./vendor/bin/sail artisan key:generate
 
@@ -36,12 +39,23 @@ cp .env.example .env
 
 # Plutôt que de tapper `./vendor/bin/sail` à chaque commande 
 # vous pouvez définir un alias global ou local vers sail.
-alias sail='sh $([ -f sail ] && echo sail || echo vendor/bin/sail)
+alias sail='sh $([ -f sail ] && echo sail || echo vendor/bin/sail)'
 ```
 [Documentation officielle de Laravel pour la configuration de l'alias](https://laravel.com/docs/11.x/sail#configuring-a-shell-alias)
 
 ## Editions particulières
 ATTENTION : ne pas oublier de mettre à jour les variables du .env (l'utilisateur Boursorama possède une valeur par défaut et est donc optionnel).
+Variables importantes :
+```txt
+APP_URL=VOTRE_IP_PUBLIQUE
+
+DB_DATABASE
+DB_USERNAME
+DB_PASSWORD
+
+BOURSORAMA_USERNAME
+BOURSORAMA_PASSWORD
+```
 
 # Exploitation
 ## Commandes
