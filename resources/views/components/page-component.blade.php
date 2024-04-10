@@ -34,7 +34,7 @@
 
         <iframe height="100%"
                 width="100%"
-                src="{{ env('APP_URL') . ':7900?password=' . env('SAIL_VNC_PASSWORD') . '&autoconnect=1&resize=scale' }}"></iframe>
+                src="{{ env('APP_URL') . ':' . env('SE_NO_VNC_PORT', 7900) . '?password=' . env('SAIL_VNC_PASSWORD') . '&autoconnect=1&resize=scale' }}"></iframe>
       </section>
       <section>
         <h3>
