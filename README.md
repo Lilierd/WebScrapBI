@@ -73,8 +73,8 @@ ATTENTION : ne pas oublier de mettre à jour les variables du .env (l'utilisateu
         - `sail artisan boursorama:aggregate --url="https://www.boursorama.com/cours/1rPAB/" --url="https://www.boursorama.com/cours/1rPOVH/" -vvv`
     - En précisant le nom de l'action directement (le mode non interactif est conseillé `-n`):
         - `sail artisan boursorama:aggregate --ms="OVHCLOUD" --ms="AB SCIENCE" -n -vvv`
-    - `sail artisan boursorama:aggregate -vvv`
-        - Vous serez invités à suivre l'éxecution et choisir l'action désirée en saisissant son nom ou son indice dans la liste. Vous pouvez sélectionner de multiples valeurs en les séparant par des virgules. La saisie du nom est autocomplétée (vous pouvez - *normalement* - utiliser la touche TAB).
+    - Sans arguments. Vous serez alors invité à suivre l'éxecution et choisir l'action désirée en saisissant son nom ou son indice dans la liste. Vous pouvez sélectionner de multiples valeurs en les séparant par des virgules. La saisie du nom est autocomplétée (vous pouvez - *normalement* - utiliser la touche TAB). En mode non interactif `-n`, l'ensemble des actions est scrapé.
+        - `sail artisan boursorama:aggregate -vvv`
 
 ### Récupérer les conversations des actions :
 Peu importe que vous spécifiez l'URL, un nom d'action ou aucune des options vues précedemment, si vous ajoutez l'option `--messages` le scraper ira récupérer les conversations des actions spécifiées.
