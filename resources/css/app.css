@@ -88,6 +88,7 @@ html {
          * FOOTER
          **/
         & footer {
+            font-size: 0.8em;
             position: relative;
             display: flex;
             flex-direction: column;
@@ -110,9 +111,16 @@ html {
                 flex-grow: 1;
                 justify-content: center;
                 text-align: center;
+                color: var(--accent);
+
                 & a {
-                    color: var(--primary);
+                    color: var(--accent);
                     transition: color ease-in-out 0.25s;
+                    &:hover {
+                        color: var(--primary);
+                        transition: color ease-in-out 0.25s;
+
+                    }
                 }
             }
         }
